@@ -24,7 +24,7 @@ Installation
 ------------
 
 Install the required plugins [HistoryLog] and [SimpleVocab]. The last
-improvements on History Log are not yet committed, so the [fork of HistoryLog]
+improvements on History Log are not yet committed, so the [fork of History Log]
 should still be used.
 
 Install the optional plugin [Hide Elements] in order to hide some fields to
@@ -90,7 +90,7 @@ Copyright
 * Copyright Daniel Berthereau, 2015
 
 
-[Ead]: https://github.com/Daniel-KM/CuratorMonitor
+[Curator Monitor]: https://github.com/Daniel-KM/CuratorMonitor
 [Omeka]: https://omeka.org
 [HistoryLog]: https://github.com/UCSCLibrary/HistoryLog
 [fork of History Log]: https://github.com/Daniel-KM/HistoryLog

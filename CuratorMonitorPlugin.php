@@ -27,6 +27,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         'config_form',
         'config',
         'admin_head',
+        'admin_element_sets_form',
         'admin_element_sets_form_each',
         // No hook to save element set, but a hook is fired for each element.
         'after_save_element',
@@ -47,6 +48,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
     protected $_options = array(
         'curator_monitor_elements_unique' => array(),
         'curator_monitor_elements_steppable' => array(),
+        'curator_monitor_display_remove' => false,
     );
 
     /**
@@ -176,6 +178,9 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
      */
     public function hookConfigForm($args)
     {
+        // The option is set one time only.
+        set_option('curator_monitor_display_remove', false);
+
         $view = get_view();
         echo $view->partial(
             'plugins/curator-monitor-config-form.php'
@@ -213,6 +218,23 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
      * @param array @args
      * @return void
      */
+    public function hookAdminElementSetsForm($args)
+    {
+        $elementSet = $args['element_set'];
+        if ($elementSet->name != $this->_elementSetName) {
+            return;
+        }
+
+        // The option is set one time only.
+        set_option('curator_monitor_display_remove', false);
+    }
+
+    /**
+     * Hook to manage element set.
+     *
+     * @param array $args
+     * @return void
+     */
     public function hookAdminElementSetsFormEach($args)
     {
         $elementSet = $args['element_set'];
@@ -243,6 +265,15 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
             implode(PHP_EOL, $statusElement['terms']),
             array('placeholder' => __('Ordered list of concise terms, one by line'), 'rows' => '5', 'cols' => '10'));
 
+        // Add the remove checkbox only if requested in the config page.
+        if (get_option('curator_monitor_display_remove')) {
+            $html .= $view->formLabel('elements[' . $element->id. '][remove]', __('Remove this element'));
+            $totalElementTexts = $this->_db->getTable('ElementText')->count(array('element_id' => $element->id));
+            $html .= '<p class="explanation">' . __('Warning: All existing data (%d) for this field will be removed without further notice.', $totalElementTexts) . '</p>';
+            $html .= $view->formCheckbox('elements[' . $element->id. '][remove]',
+                true, array('checked' => false));
+        }
+
         echo $html;
     }
 
@@ -269,6 +300,18 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
             $request = Zend_Controller_Front::getInstance()->getRequest();
             $elements = $request->getParam('elements');
             $postElement = $elements[$record->id];
+
+            // Check remove.
+            if (!empty($postElement['remove'])) {
+                $this->_setUnique($record, false);
+                $this->_setSteppable($record, false);
+                $this->_setTerms($record, '');
+                $msg = __('The element "%s" (%d) of the set "%s" is going to be removed.', $record->name, $record->id, $record->set_name);
+                _log('[CuratorMonitor] ' . $msg, Zend_Log::WARN);
+                // TODO History Log this type of remove.
+                $record->delete();
+                return;
+            }
 
             // Set / unset unique.
             $this->_setUnique($record, $postElement['unique']);

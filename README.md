@@ -11,6 +11,8 @@ Notes
 -----
 
 - To modify elements, go to Settings > Element Sets > Monitor > Edit.
+- To remove an element, a security is added: a checkbox in the config page of
+the plugin should be checked before.
 
 
 TODO

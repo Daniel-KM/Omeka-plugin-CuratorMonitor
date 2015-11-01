@@ -225,8 +225,54 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
             return;
         }
 
+        $view = $args['view'];
+
         // The option is set one time only.
         set_option('curator_monitor_display_remove', false);
+
+        // TODO Manage order and multiple new elements dynamically.
+        // Re-use the "add button" from the item-types page.
+
+        $statusElements = $view->monitor()->getStatusElements();
+
+        // Add a new element.
+        $options = array();
+        $elementTempId = '' . time();
+        $elementName = '';
+        $elementDescription = '';
+        $elementOrder = count($statusElements) + 1;
+        $elementComment = '';
+        $elementUnique = false;
+        $elementSteppable = false;
+        $elementTerms = '';
+
+        $stem = 'new-elements' . "[$elementTempId]";
+        $elementNameName = $stem . '[name]';
+        $elementDescriptionName = $stem . '[description]';
+        $elementOrderName = $stem . '[order]';
+        $elementCommentName = $stem . '[comment]';
+        $elementUniqueName = $stem . '[unique]';
+        $elementSteppableName = $stem . '[steppable]';
+        $elementTermsName = $stem . '[terms]';
+
+        $options = array(
+            'element_name_name' => $elementNameName,
+            'element_name_value' => $elementName,
+            'element_description_name' => $elementDescriptionName,
+            'element_description_value' => $elementDescription,
+            'element_order_name' => $elementOrderName,
+            'element_order_value' => $elementOrder,
+            'element_comment_name' => $elementCommentName,
+            'element_comment_value' => $elementComment,
+            'element_unique_name' => $elementUniqueName,
+            'element_unique_value' => $elementUnique,
+            'element_steppable_name' => $elementSteppableName,
+            'element_steppable_value' => $elementSteppable,
+            'element_terms_name' => $elementTermsName,
+            'element_terms_value' => $elementTerms,
+       );
+
+        echo common('add-new-element', $options);
     }
 
     /**
@@ -299,6 +345,52 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
             // Get post values.
             $request = Zend_Controller_Front::getInstance()->getRequest();
             $elements = $request->getParam('elements');
+
+            // The "add new Element" is not a standard hook.
+            $statusElementSet = $view->monitor()->getElementSet();
+            $statusElementNames = $view->monitor()->getStatusElementNamesById();
+            $newElements = $request->getParam('new-elements');
+            $key = 0;
+            foreach ($newElements as $newElement) {
+                $newElementName = trim($newElement['name']);
+                // Check if this a unique element in the set.
+                if ($newElementName && !in_array($newElementName, $statusElementNames)) {
+                    // Check if it is not a duplicate or just created.
+                    $element = get_record('Element', array(
+                        'name' => $newElementName,
+                        'element_set_id' => $statusElementSet->id,
+                    ));
+                    if ($element) {
+                        continue;
+                    }
+
+                    // Create the new element.
+                    $element = new Element;
+                    $element->name = $newElementName;
+                    $element->element_set_id = $statusElementSet->id;
+                    $element->order = ++$key + count($statusElements);
+                    $element->description = $newElement['description'];
+                    $element->comment = $newElement['comment'];
+                    $element->save();
+
+                    // Update current elements to avoid issues when multiple
+                    // elements are inserted.
+                    $view->monitor()->resetCache();
+                    $statusElements = $view->monitor()->getStatusElements();
+                    $statusElementNames = $view->monitor()->getStatusElementNamesById();
+
+                    $this->_setUnique($element, $newElement['unique']);
+                    $this->_setSteppable($element, $newElement['steppable']);
+                    $this->_setTerms($element, $newElement['terms']);
+
+                    $msg = __('The element "%s" (%d) has been added to the set "%s".', $element->name, $element->id, $statusElementSet->name);
+                    $flash = Zend_Controller_Action_HelperBroker::getStaticHelper('FlashMessenger');
+                    $flash->addMessage($msg, 'success');
+                    _log('[CuratorMonitor] ' . $msg, Zend_Log::NOTICE);
+                }
+            }
+
+            // Process update.
             $postElement = $elements[$record->id];
 
             // Check remove.
@@ -322,6 +414,8 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
             // Set / unset terms.
             $this->_setTerms($record, $postElement['terms']);
         }
+
+        // The hook for the creation of a new element is not fired by Omeka.
     }
 
     /**

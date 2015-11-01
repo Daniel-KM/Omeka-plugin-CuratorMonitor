@@ -128,6 +128,17 @@ class CuratorMonitor_View_Helper_Monitor extends Zend_View_Helper_Abstract
     }
 
     /**
+     * Reset internal cache to simplify creation of new elements.
+     *
+     * @return void
+     */
+    public function resetCache()
+    {
+        $this->_elementSet = null;
+        $this->_getStatusElements();
+    }
+
+    /**
      * Helper to get all status elements.
      *
      * @return array

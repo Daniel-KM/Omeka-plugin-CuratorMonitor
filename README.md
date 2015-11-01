@@ -4,13 +4,17 @@ Curator Monitor (plugin for Omeka)
 [Curator Monitor] is a plugin for [Omeka] that allows a curator to monitor the
 status of the collections. It creates an element set to manage administrative
 status of records (transcription, translation, notes, etc.) and adds a view to
-follow evolution of items.
+follow evolution of items. Element and terms can be added and modified at any
+time.
 
 
 Notes
 -----
 
-- To modify elements, go to Settings > Element Sets > Monitor > Edit.
+- To modify or to add elements, go to Settings > Element Sets > Monitor > Edit.
+- Once inserted, the name and the description can't be changed via the interface
+like fields of other elements sets. The comment and the other options can be
+updated at any time.
 - To remove an element, a security is added: a checkbox in the config page of
 the plugin should be checked before.
 
@@ -18,7 +22,6 @@ the plugin should be checked before.
 TODO
 ----
 
-- Allows to add new elements of status via user interface.
 - Export stats about metadata to LibreOffice.
 
 

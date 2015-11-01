@@ -25,12 +25,12 @@ Notes
   Stats can be filtered and exported via the main page of the plugin. Supported
   formats are:
 
-  - [CSV] (values are separated by a tabulation).
-  - [Open Document Spreadsheet] or "ods", the normalized format for
+  - CSV, with values separated by a tabulation.
+  - [OpenDocument Spreadsheet] or "ods", the normalized format for
   spreadsheets, that  can be open by any free spreadsheets like [LibreOffice],
   or not free ones. This format requires that Zip to be installed with PHP on
   the server (generally by default).
-  - [Flat Open Document Spreadsheet] or "fods", another standard format that can
+  - [Flat OpenDocument Spreadsheet] or "fods", another standard format that can
   be opened by any free spreadsheets or by any text editor (this is a simple xml
   file). Note: With old releases of [LibreOffice] for Windows, a little free
   [filter] may need to be installed.
@@ -39,7 +39,7 @@ Notes
 Installation
 ------------
 
-Install the required plugins [HistoryLog] (version 2.8 or higher) and [SimpleVocab].
+Install the required plugins [HistoryLog], version 2.8 or higher, and [SimpleVocab].
 If the last improvements on History Log are not yet committed, the [fork of History Log]
 should be used.
 

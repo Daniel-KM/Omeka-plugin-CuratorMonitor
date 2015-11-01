@@ -173,6 +173,7 @@ class CuratorMonitor_IndexController extends Omeka_Controller_AbstractActionCont
                         return;
                     }
 
+                    $this->_prepareSpreadsheet();
                     $filename = $this->_prepareOds();
                     if (empty($filename)) {
                         $flashMessenger = $this->_helper->FlashMessenger;
@@ -191,6 +192,7 @@ class CuratorMonitor_IndexController extends Omeka_Controller_AbstractActionCont
                     break;
 
                 case 'fods':
+                    $this->_prepareSpreadsheet();
                     $response
                         ->setHeader('Content-Disposition',
                             'attachment; filename=Omeka_Curator_Monitor_' . date('Ymd-His') . '.fods')
@@ -285,16 +287,16 @@ class CuratorMonitor_IndexController extends Omeka_Controller_AbstractActionCont
     }
 
     /**
-     * Prepare output as OpenDocument Spreadsheet (ods).
+     * Prepare arguments for a spreadsheet.
      *
-     * @return string|null Filename of the ods. Null if error.
+     * @return array
      */
-    protected function _prepareOds()
+    protected function _prepareSpreadsheet()
     {
-        $dateTime = date('Y-m-d\TH:i:s') . strtok(substr(microtime(), 1), ' ');
         $tableNames = array();
         $headers = array();
         $statusElements = $this->view->monitor()->getStatusElementNamesById();
+        $dateTime = date('Y-m-d\TH:i:s') . strtok(substr(microtime(), 1), ' ');
         $cells = 0;
         foreach ($this->view->results as $elementId => $result):
             $tableNames[] = $statusElements[$elementId];
@@ -303,18 +305,36 @@ class CuratorMonitor_IndexController extends Omeka_Controller_AbstractActionCont
             $cells += ((count($result) + ($this->view->params['exportheaders'] ? 1 : 0)) * count($tableHeaders));
         endforeach;
 
-        $options = array(
+        $variables = array(
+            'module' => 'curator-monitor',
             'params' => $this->view->params,
             'tableNames' => $tableNames,
             'headers' => $headers,
-            'values' => $this->view->results,
+            'values' => array_values($this->view->results),
             'generator' => $this->view->generator,
             'user' => current_user(),
             'dateTime' => $dateTime,
             'cells' => $cells,
             'tableActive' => 0,
-            'declaration' => true,
+            'declaration' => false,
         );
+
+        unset($this->view->params);
+        unset($this->view->results);
+        unset($this->view->generator);
+
+        $this->view->variables = $variables;
+    }
+
+    /**
+     * Prepare output as OpenDocument Spreadsheet (ods).
+     *
+     * @see HistoryLog_IndexController::_prepareOds()
+     * @return string|null Filename of the ods. Null if error.
+     */
+    protected function _prepareOds()
+    {
+        $this->view->variables['declaration'] = true;
 
         // Create a temp dir to build the ods.
         $tempDir = tempnam(sys_get_temp_dir(), 'ods');
@@ -363,7 +383,9 @@ class CuratorMonitor_IndexController extends Omeka_Controller_AbstractActionCont
         foreach ($xmlFiles as $file) {
             $name = pathinfo($file, PATHINFO_FILENAME);
             $filename = tempnam(sys_get_temp_dir(), $name);
-            $xml = $this->view->partial('ods/' . $name . '.php', 'curator-monitor', $options);
+            $xml = $this->view->partial('ods/' . $name . '.php',
+                $this->view->variables['module'],
+                $name == 'content' ? array('variables' => $this->view->variables) : $this->view->variables);
             $result = file_put_contents($filename, $xml);
             if (!$result) {
                 return;
@@ -442,6 +464,7 @@ class CuratorMonitor_IndexController extends Omeka_Controller_AbstractActionCont
     /**
      * Check if the server support zip and return the method used.
      *
+     * @see HistoryLog_IndexController::_getZipProcessor()
      * @return boolean
      */
     protected function _getZipProcessor()

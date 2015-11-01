@@ -2,6 +2,7 @@
 // Prepare tags to simplify export with small indentation to keep human output.
 // Anyway, this will be zipped.
 $indent = ' ';
+// The eol may be removed. See the function used for the row too.
 $eol = PHP_EOL;
 
 // Prepare empty and normal cells. Empty cells are currently not checked to
@@ -19,9 +20,7 @@ $betweenCells = $afterCell . $beforeCell;
   <office:spreadsheet>
    <table:calculation-settings table:automatic-find-labels="false"/>
 <?php
-
-$iTable = 0;
-foreach ($values as $elementId => $table):
+foreach ($values as $iTable => $table):
     // Main tag of the table.
     echo str_repeat($indent, 3) . '<table:table table:name="' . $tableNames[$iTable] . '" table:style-name="ta1">' . $eol;
 
@@ -41,7 +40,7 @@ foreach ($values as $elementId => $table):
             echo str_repeat($indent, 4) . '<table:table-row table:style-name="ro1">' . $eol;
 
             // Replace all internal ends of line by a tag. None here.
-            // $row = array_map(function ($value) { return str_replace($eol, '</text:p><text:p>', $value); }, $row);
+            // $row = array_map(function ($value) { return str_replace(PHP_EOL, '</text:p><text:p>', $value); }, $row);
 
             // TODO Manage repeated cells.
 
@@ -61,8 +60,6 @@ foreach ($values as $elementId => $table):
 
     // End of the table.
     echo str_repeat($indent, 3) . '</table:table>' . $eol;
-
-    $iTable++;
 endforeach;
 
 ?>

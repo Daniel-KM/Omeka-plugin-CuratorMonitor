@@ -26,6 +26,10 @@ Notes
   formats are:
 
   - [CSV] (values are separated by a tabulation).
+  - [Open Document Spreadsheet] or "ods", the normalized format for
+  spreadsheets, that  can be open by any free spreadsheets like [LibreOffice],
+  or not free ones. This format requires that Zip to be installed with PHP on
+  the server (generally by default).
   - [Flat Open Document Spreadsheet] or "fods", another standard format that can
   be opened by any free spreadsheets or by any text editor (this is a simple xml
   file). Note: With old releases of [LibreOffice] for Windows, a little free
@@ -110,6 +114,7 @@ Copyright
 [SimpleVocab]: https://github.com/omeka/plugin-SimpleVocab
 [Hide Elements]: https://github.com/omeka/HideElements
 [fork of Hide Elements]: https://github.com/Daniel-KM/HideElements
+[OpenDocument Spreadsheet]: http://opendocumentformat.org/
 [LibreOffice]: https://www.libreoffice.org/
 [Flat OpenDocument Spreadsheet]: https://en.wikipedia.org/wiki/OpenDocument_technical_specification
 [filter]: http://www.sylphide-consulting.com/shapekit/spreadsheet-generation/15-opendocument-flat-format

@@ -35,7 +35,7 @@ echo head(array(
             <?php endif; ?>
             <?php if (!empty($params['element'])): ?>
             <li><?php
-                $statusElements = $this->monitor()->getStatusElements(true, true);
+                $statusElements = $this->monitor()->getStatusElements(true, null, true);
                 if (count($params['element']) < count($statusElements)):
                     $list = array();
                     foreach ($params['element'] as $elementId):
@@ -52,8 +52,12 @@ echo head(array(
     </div>
 <?php
 if (!empty($stats)):
+$statusElements = $this->monitor()->getStatusElements();
 foreach ($stats as $elementId => $stat):
-    $element = get_record_by_id('Element', $elementId);
+    if (!isset($statusElements[$elementId]['element'])):
+        continue;
+    endif;
+    $element = $statusElements[$elementId]['element'];
 ?>
 <section class="ten columns alpha omega">
     <div class="panel">
@@ -66,7 +70,7 @@ foreach ($stats as $elementId => $stat):
                     $browseHeadings = array();
                     $headers = array_keys(reset($stat));
                     foreach ($headers as $header):
-                        $browseHeadings[$header ?: __('Not Set')] = null;
+                        $browseHeadings[strlen($header) > 0 ? $header : __('Not Set')] = null;
                     endforeach;
                     echo browse_sort_links($browseHeadings, array('link_tag' => 'th scope="col"', 'list_tag' => ''));
                     ?>
@@ -92,7 +96,7 @@ foreach ($stats as $elementId => $stat):
                         echo link_to_items_browse(__('Browse'),
                             array('advanced' => array(array('element_id' => $element->id, 'type' => 'is exactly', 'terms' => $header))),
                             array('class' => 'button small blue'));
-                        if ($key < count($headers) - 1):
+                        if ($statusElements[$elementId]['steppable'] && $key < count($headers) - 1):
                             printf('<a href="%s" class="button small red">%s</a>',
                                 html_escape(url('curator-monitor/index/stage', array('element' => $element->id, 'term' => $header))),
                                 __('Stage'));
@@ -111,9 +115,9 @@ foreach ($stats as $elementId => $stat):
     <br class="clear" />
     <p><?php
         echo __('Your query returned no result.');
-        $statusElements = $this->monitor()->getStatusElements(true, true);
+        $statusElements = $this->monitor()->getStatusElements(true, null, true);
         if (empty($statusElements)):
-            echo ' ' . __('There is no element that can be used as a status (a Monitor element with terms and non-repetitive).');
+            echo ' ' . __('There is no element that can be used as a status (a Monitor element with terms and unrepeatable).');
         endif;
     ?></p>
 <?php endif; ?>

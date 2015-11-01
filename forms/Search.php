@@ -62,7 +62,7 @@ class CuratorMonitor_Form_Search extends Omeka_Form
         // Elements.
         $this->addElement('select', 'element', array(
             'label' => __('Element'),
-            'description' => __('Limit response to the selected status.'),
+            'description' => __('Limit response to the selected unrepeatable status.'),
             'value' => '',
             'validators' => array(
                 'digits',
@@ -248,7 +248,7 @@ class CuratorMonitor_Form_Search extends Omeka_Form
      */
     protected function _getElementOptions()
     {
-        $elements = get_view()->monitor()->getStatusElementNamesById(true, true);
+        $elements = get_view()->monitor()->getStatusElementNamesById(true, null, true);
         return array('' => 'All Monitor Status') + $elements;
     }
 }

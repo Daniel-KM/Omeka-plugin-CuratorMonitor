@@ -22,7 +22,7 @@ class CuratorMonitor_IndexController extends Omeka_Controller_AbstractActionCont
      *
      * This administrative metadata will enable the project to keep accurate
      * statistics on progress, identify documents that are ready for the next
-     * stage in processing, and select documents ready to be published at each
+     * stage in workflow, and select documents ready to be published at each
      * quarter without having to create a separate control database or system.
      */
     public function indexAction()
@@ -39,21 +39,26 @@ class CuratorMonitor_IndexController extends Omeka_Controller_AbstractActionCont
         );
         $params = array_diff_key($params, $zendParams);
 
-        // Set internal params.
-        $elements = $this->view->monitor()->getStatusElements(true, true);
+        // Set internal params: list of all status elements.
+        $statusElements = array();
         if (empty($params['element'])) {
-            $params['element'] = array_keys($elements);
+            // Set default elements: unique, steppable or not and with terms.
+            $statusElements = $this->view->monitor()->getStatusElements(true, null, true);
+            $params['element'] = array_keys($statusElements);
         }
         // Check element and set it as array.
         else {
-            if (isset($elements[$params['element']])) {
-                $elements = array($params['element'] => $elements[$params['element']]);
+            // Check the element.
+            $statusElement = $this->view->monitor()->getStatusElement($params['element'], true, null, true);
+            if ($statusElement) {
+                // Set it as array to simplify next process.
+                $statusElements = array($params['element'] => $statusElement);
                 $params['element'] = (array) $params['element'];
             }
         }
 
         // A second check may be needed if there are no unique elements.
-        if (empty($elements)) {
+        if (empty($statusElements)) {
             $this->view->stats = null;
             return;
         }
@@ -85,7 +90,7 @@ class CuratorMonitor_IndexController extends Omeka_Controller_AbstractActionCont
             // Fill all the values for all terms and all dates with "0". This
             // allows to get a value for the unused terms. They may be removed
             // in the view.
-            // To quick the process, all the periods are build before.
+            // To quick the process, all the periods are built before.
             $periods = array();
             foreach ($result as $key => $row) {
                 $byRow = array_intersect_key($row, $byDates);
@@ -100,7 +105,7 @@ class CuratorMonitor_IndexController extends Omeka_Controller_AbstractActionCont
             ksort($periods);
 
             // Prepare the full array for response, with empty count.
-            foreach ($elements as $elementId => $element) {
+            foreach ($statusElements as $elementId => $element) {
                 $terms = array_fill_keys($element['terms'], '');
                 foreach ($periods as $by => $row) {
                     $stats[$elementId][$by] = $row + $terms;
@@ -125,7 +130,7 @@ class CuratorMonitor_IndexController extends Omeka_Controller_AbstractActionCont
             $by = 'All';
             // Fill all the values for all terms with "0". This allows to get a
             // value for the unused terms. They may be removed in the view.
-            foreach ($elements as $elementId => $element) {
+            foreach ($statusElements as $elementId => $element) {
                 $stats[$elementId][$by] = array_fill_keys($element['terms'], 0);
             }
             // Convert the results in the new array.
@@ -189,7 +194,8 @@ class CuratorMonitor_IndexController extends Omeka_Controller_AbstractActionCont
 
         if (!empty($elementId) && !empty($term)) {
             $statusElement = get_view()->monitor()
-                ->getStatusElement($elementId, true, true);
+                // Only elements unique, steppable and with terms can be staged.
+                ->getStatusElement($elementId, true, true, true);
             $element = $statusElement['element'];
             if (!empty($statusElement)) {
                 $key = array_search($term, $statusElement['terms']);

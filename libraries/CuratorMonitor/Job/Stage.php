@@ -12,10 +12,10 @@ class CuratorMonitor_Job_Stage extends Omeka_Job_AbstractJob
 
         $element = $this->_options['element'];
         $statusElement = get_view()->monitor()
-            ->getStatusElement($element, true, true);
+            ->getStatusElement($element, true, true, true);
 
         if (empty($statusElement)) {
-            throw new RuntimeException(__('Element "%s" has no vocabulary or is repetitive.', $element));
+            throw new RuntimeException(__('Element "%s" is not a workflow, has no vocabulary or is a repeatable field.', $element));
         }
 
         $element = $statusElement['element'];

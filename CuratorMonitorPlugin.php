@@ -27,6 +27,10 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         'config_form',
         'config',
         'admin_head',
+        'admin_element_sets_form_each',
+        // No hook to save element set, but a hook is fired for each element.
+        'after_save_element',
+        'before_delete_element_set',
     );
 
     /**
@@ -42,6 +46,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
      */
     protected $_options = array(
         'curator_monitor_elements_unique' => array(),
+        'curator_monitor_elements_steppable' => array(),
     );
 
     /**
@@ -67,7 +72,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
                 $elementSetMetadata['name']));
         }
 
-        // Process.
+        // Process the installation.
         foreach ($elementSetMetadata['elements'] as &$element) {
             $element['name'] = $element['label'];
         }
@@ -82,30 +87,41 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
             throw new Omeka_Plugin_Exception(__('Unable to build the element set "%s".', $elementSetMetadata['name']));
         }
 
-        // Add terms for simple vocabs and the flag "unique".
+        // Add terms for simple vocabs and the flags "unique" and "steppable".
         $es = $elementSet->getElements();
         foreach ($es as $e) {
             foreach ($elements as $key => $element) {
                 if ($element['name'] == $e->name) {
-                    if (!empty($element['terms'])) {
-                        $terms = new SimpleVocabTerm();
-                        $terms->element_id = $e->id;
-                        $terms->terms = implode(PHP_EOL, $element['terms']);
-                        $terms->save();
-                    }
                     // Set / unset the flag for unique.
-                    if (!empty($element['unique'])) {
+                    if (empty($element['unique'])) {
+                        unset($this->_options['curator_monitor_elements_unique'][$e->id]);
+                    }
+                    // Add the flag.
+                    else {
                         $this->_options['curator_monitor_elements_unique'][$e->id] = true;
                     }
-                    // Remove the flag.
+
+                    // Set / unset the flag for process.
+                    if (empty($element['steppable'])) {
+                        unset($this->_options['curator_monitor_elements_steppable'][$e->id]);
+                    }
+                    // Add the flag.
                     else {
-                        unset($this->_options['curator_monitor_elements_unique'][$e->id]);
+                        $this->_options['curator_monitor_elements_steppable'][$e->id] = true;
+                    }
+
+                    if (!empty($element['terms'])) {
+                        $vocabTerm = new SimpleVocabTerm();
+                        $vocabTerm->element_id = $e->id;
+                        $vocabTerm->terms = implode(PHP_EOL, $element['terms']);
+                        $vocabTerm->save();
                     }
                 }
             }
         }
 
         $this->_options['curator_monitor_elements_unique'] = json_encode($this->_options['curator_monitor_elements_unique']);
+        $this->_options['curator_monitor_elements_steppable'] = json_encode($this->_options['curator_monitor_elements_steppable']);
 
         $this->_installOptions();
     }
@@ -192,6 +208,93 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
     }
 
     /**
+     * Hook to manage element set.
+     *
+     * @param array @args
+     * @return void
+     */
+    public function hookAdminElementSetsFormEach($args)
+    {
+        $elementSet = $args['element_set'];
+        if ($elementSet->name != $this->_elementSetName) {
+            return;
+        }
+
+        $element = $args['element'];
+        $view = $args['view'];
+
+        $statusElement = $view->monitor()->getStatusElement($element->id);
+
+        $html = '';
+
+        // Add unique.
+        $html .= $view->formLabel('elements[' . $element->id. '][unique]', __('Unrepeatable'));
+        $html .= $view->formCheckbox('elements[' . $element->id. '][unique]',
+            true, array('checked' => (boolean) $statusElement['unique']));
+
+        // Add process.
+        $html .= $view->formLabel('elements[' . $element->id. '][steppable]', __('Steps of a workflow'));
+        $html .= $view->formCheckbox('elements[' . $element->id. '][steppable]',
+            true, array('checked' => (boolean) $statusElement['steppable']));
+
+        // Add vocabulary terms.
+        $html .= $view->formLabel('elements[' . $element->id. '][terms]', __('Terms'));
+        $html .= $view->formTextarea('elements[' . $element->id. '][terms]',
+            implode(PHP_EOL, $statusElement['terms']),
+            array('placeholder' => __('Ordered list of concise terms, one by line'), 'rows' => '5', 'cols' => '10'));
+
+        echo $html;
+    }
+
+    /**
+     * Hook used after save element.
+     *
+     * @param array $args
+     */
+    public function hookAfterSaveElement($args)
+    {
+        $record = $args['record'];
+
+        // There is no post in this view.
+        $view = get_view();
+
+        $statusElements = $view->monitor()->getStatusElements();
+        if (!isset($statusElements[$record->id])) {
+            return;
+        }
+
+        // Update of an existing element.
+        if (empty($args['insert'])) {
+            // Get post values.
+            $request = Zend_Controller_Front::getInstance()->getRequest();
+            $elements = $request->getParam('elements');
+            $postElement = $elements[$record->id];
+
+            // Set / unset unique.
+            $this->_setUnique($record, $postElement['unique']);
+
+            // Set / unset process.
+            $this->_setSteppable($record, $postElement['steppable']);
+
+            // Set / unset terms.
+            $this->_setTerms($record, $postElement['terms']);
+        }
+    }
+
+    /**
+     * Hook used before delete element set.
+     *
+     * @param array $args
+     */
+    public function hookBeforeDeleteElementSet($args)
+    {
+        $record = $args['record'];
+        if ($record->name == $this->_elementSetName) {
+            throw new Exception(__('The element set "%s" can be removed only when the plugin "Curator Monitor" is uninstalled.', $this->_elementSetName));
+        }
+    }
+
+    /**
      * Add the Curator Monitor link to the admin main navigation.
      *
      * @param array $nav Navigation array.
@@ -258,7 +361,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
 
         // Remove all buttons "Add element" and "Remove element" for non
         // repeatable elements.
-        $listUnique = $view->monitor()->getStatusElementNamesById(null, true);
+        $listUnique = $view->monitor()->getStatusElementNamesById(true);
         $pattern =
             // This first part of pattern removes all listed buttons "Add element".
             '(' . sprintf('<input type="submit" name="add_element_(%s)" .*? class="add-element">',
@@ -275,5 +378,96 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
 
         $tabs[$this->_elementSetName] = $tab;
         return $tabs;
+    }
+
+    /**
+     * Set / unset a value in the list of unique fields.
+     *
+     * @param Record|integer $record
+     * @param boolean $isUnique
+     * @return void
+     */
+    protected function _setUnique($record, $isUnique)
+    {
+        $this->_setOptionInList($record, $isUnique, 'curator_monitor_elements_unique');
+    }
+
+    /**
+     * Set / unset a value in the list of steppable fields.
+     *
+     * @param Record|integer $record
+     * @param boolean $isSteppable
+     * @return void
+     */
+    protected function _setSteppable($record, $isSteppable)
+    {
+        $this->_setOptionInList($record, $isSteppable, 'curator_monitor_elements_steppable');
+    }
+
+    /**
+     * Set / unset a value in an option list.
+     *
+     * @param Record|integer $record
+     * @param boolean $value
+     * @param string $optionList
+     * @return void
+     */
+    protected function _setOptionInList($record, $value, $optionList)
+    {
+        $recordId = (integer) (is_object($record) ? $record->id : $record);
+        $value = (boolean) $value;
+        $list = json_decode(get_option($optionList), true);
+        // Set the flag as key.
+        if ($value) {
+            $list[$recordId] = true;
+        }
+        // Remove the flag.
+        else {
+            unset($list[$recordId]);
+        }
+        set_option($optionList, json_encode($list));
+    }
+
+    /**
+     * Set / unset a list of terms for an element.
+     *
+     * @param Record|integer $record
+     * @param array|string $terms
+     * @return void
+     */
+    protected function _setTerms($record, $terms)
+    {
+        $recordId = (integer) (is_object($record) ? $record->id : $record);
+        if (is_string($terms)) {
+            $terms = explode(PHP_EOL, trim($terms));
+        }
+
+        $terms = array_map('trim', $terms);
+        $terms = array_filter($terms, function($value) { return strlen($value) > 0; });
+        $terms = array_unique($terms);
+        $statusElement = get_view()->monitor()->getStatusElement($recordId);
+
+        // Check if an update is needed.
+        if ($statusElement['terms'] === $terms) {
+            return;
+        }
+
+        $vocabTerm = $statusElement['vocab'];
+        // Remove terms.
+        if (empty($terms)) {
+            if (!empty($vocabTerm)) {
+                $vocabTerm->delete();
+            }
+        }
+
+        // Update or create a simple vocab term.
+        else {
+            if (empty($vocabTerm)) {
+                $vocabTerm = new SimpleVocabTerm();
+                $vocabTerm->element_id = $recordId;
+            }
+            $vocabTerm->terms = implode(PHP_EOL, $terms);
+            $vocabTerm->save();
+        }
     }
 }

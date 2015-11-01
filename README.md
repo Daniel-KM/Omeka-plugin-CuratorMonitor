@@ -10,7 +10,7 @@ follow evolution of items.
 Notes
 -----
 
-- This is a beta release. Some functions may be missing.
+- To modify elements, go to Settings > Element Sets > Monitor > Edit.
 
 
 TODO
@@ -25,10 +25,11 @@ Installation
 
 Install the required plugins [HistoryLog] and [SimpleVocab]. The last
 improvements on History Log are not yet committed, so the [fork of History Log]
-should still be used.
+should still be used (version 2.7 or higher).
 
 Install the optional plugin [Hide Elements] in order to hide some fields to
-the public or selected groups of users.
+the public or selected groups of users. The [fork of Hide Elements] can be used
+too, because it allows more precise rules.
 
 Uncompress files and rename plugin folder "CuratorMonitor".
 
@@ -96,6 +97,7 @@ Copyright
 [fork of History Log]: https://github.com/Daniel-KM/HistoryLog
 [SimpleVocab]: https://github.com/omeka/plugin-SimpleVocab
 [Hide Elements]: https://github.com/omeka/HideElements
+[fork of Hide Elements]: https://github.com/Daniel-KM/HideElements
 [plugin issues]: https://github.com/Daniel-KM/CuratorMonitor/issues
 [CeCILL v2.1]: https://www.cecill.info/licences/Licence_CeCILL_V2.1-en.html
 [GNU/GPL]: https://www.gnu.org/licenses/gpl-3.0.html

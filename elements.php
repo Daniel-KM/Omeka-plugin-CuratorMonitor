@@ -17,6 +17,7 @@ $elementSetMetadata = array(
                 'Ready to Publish',
                 'Published',
             ),
+            'steppable' => true,
         ),
         array(
             'name' => 'transcription-status',
@@ -32,6 +33,7 @@ $elementSetMetadata = array(
                 'Published',
                 'Restricted',
             ),
+            'steppable' => true,
         ),
         array(
             'name' => 'translation-status',
@@ -48,6 +50,7 @@ $elementSetMetadata = array(
                 'Published',
                 'Restricted',
             ),
+            'steppable' => true,
         ),
         array(
             'name' => 'research-status',
@@ -62,6 +65,7 @@ $elementSetMetadata = array(
                 'Ready to Publish',
                 'Published',
             ),
+            'steppable' => true,
         ),
         array(
             'name' => 'facsimile-permission-status',
@@ -74,11 +78,12 @@ $elementSetMetadata = array(
                 'Cleared',
                 'Restricted',
             ),
+            'steppable' => true,
         ),
         array(
             'name' => 'copyright-transcription-status',
             'label' => 'Copyright Status for the Transcription',
-            'description' => 'Status of the Copyright for the transcrption, set by the staff member that checked it .',
+            'description' => 'Status of the Copyright for the transcription, set by the staff member that checked it .',
             'comment' => '',
             'unique' => true,
             'terms' => array(
@@ -86,6 +91,7 @@ $elementSetMetadata = array(
                 'Cleared',
                 'Restricted',
             ),
+            'steppable' => true,
         ),
         array(
             'name' => 'publication-status',
@@ -98,6 +104,7 @@ $elementSetMetadata = array(
                 'Ready',
                 'Published',
             ),
+            'steppable' => true,
         ),
         array(
             'name' => 'editor-notes',
@@ -122,6 +129,7 @@ $elementSetMetadata = array(
                 'Medium',
                 'Difficult',
             ),
+            'steppable' => false,
         ),
     ),
 );

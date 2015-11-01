@@ -22,9 +22,9 @@ ul.quick-filter-wrapper li ul li span {width: 206px;}
         <?php endforeach; ?>
         <li><span style="font-weight: bold; font-style: italic; padding-left: 4px; background-color:#fff;"><?php echo __('Status'); ?></span></li>
         <?php
-        $elements = get_view()->monitor()->getStatusElementNamesById(true, true);
-        foreach ($elements as $query => $label): ?>
-        <li><a href="<?php echo url('curator-monitor', array('element' => $query)); ?>"><?php echo $label; ?></a></li>
+        $statusElements = get_view()->monitor()->getStatusElementNamesById(true, null, true);
+        foreach ($statusElements as $query => $statusElement): ?>
+        <li><a href="<?php echo url('curator-monitor', array('element' => $query)); ?>"><?php echo $statusElement; ?></a></li>
         <?php endforeach; ?>
         <li><span style="font-weight: bold; font-style: italic; padding-left: 4px; background-color:#fff;"><?php echo __('Date'); ?></span></li>
         <li><a href="<?php echo url('curator-monitor', array('added' => date('Y-m-d', time()))); ?>"><?php echo __('Today'); ?></a></li>

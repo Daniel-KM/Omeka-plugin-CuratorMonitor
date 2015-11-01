@@ -59,7 +59,7 @@ class CuratorMonitor_IndexController extends Omeka_Controller_AbstractActionCont
 
         // A second check may be needed if there are no unique elements.
         if (empty($statusElements)) {
-            $this->view->stats = null;
+            $this->view->results = array();
             return;
         }
 
@@ -69,7 +69,7 @@ class CuratorMonitor_IndexController extends Omeka_Controller_AbstractActionCont
         $result = $this->_helper->db->countRecords($params);
 
         if (empty($result)) {
-            $this->view->stats = null;
+            $this->view->results = array();
             return;
         }
 
@@ -142,20 +142,34 @@ class CuratorMonitor_IndexController extends Omeka_Controller_AbstractActionCont
         unset($result);
 
         $this->view->byDates = $byDates;
-        $this->view->stats = $stats;
+        $this->view->results = $stats;
 
         // Request for downloading.
-        $isCsv = $this->_getParam('csvdownload');
-        if ($isCsv) {
-            // Prepare the download.
-            $response = $this->getResponse();
-            $response
-                ->setHeader('Content-Disposition',
-                    'attachment; filename=Omeka_Curator_Monitor_' . date('Ymd-His') . '.csv')
-                ->setHeader('Content-type', 'text/csv');
+        $export = $this->_getParam('export');
 
-            // The response is rendered via the "browse-csv" script.
-            $this->render('index-csv');
+        if ($export) {
+            $response = $this->getResponse();
+
+            $this->view->generator = $this->_getGenerator();
+
+            // Prepare the export if needed.
+            switch ($export) {
+                case 'csv':
+                    $response
+                        ->setHeader('Content-Disposition',
+                            'attachment; filename=Omeka_Curator_Monitor_' . date('Ymd-His') . '.csv')
+                        ->setHeader('Content-type', 'text/csv');
+                    $this->render('browse-csv');
+                    break;
+
+                case 'fods':
+                    $response
+                        ->setHeader('Content-Disposition',
+                            'attachment; filename=Omeka_Curator_Monitor_' . date('Ymd-His') . '.fods')
+                        ->setHeader('Content-type', 'text/xml');
+                    $this->render('browse-fods');
+                    break;
+            }
         }
     }
 
@@ -220,5 +234,25 @@ class CuratorMonitor_IndexController extends Omeka_Controller_AbstractActionCont
         }
 
         return $this->redirect('curator-monitor');
+    }
+
+
+    /**
+     * Return the generator of the OpenDocument.
+     *
+     * @see HistoryLog_IndexController::_getGenerator()
+     * @return string
+     */
+    protected function _getGenerator()
+    {
+        $iniReader = new Omeka_Plugin_Ini(PLUGIN_DIR);
+        $path = basename(dirname(dirname(__FILE__)));
+        $generator = sprintf('Omeka/%s - %s/%s [%s] (%s)',
+            OMEKA_VERSION,
+            $iniReader->getPluginIniValue($path, 'name'),
+            $iniReader->getPluginIniValue($path, 'version'),
+            $iniReader->getPluginIniValue($path, 'author'),
+            $iniReader->getPluginIniValue($path, 'link'));
+        return $generator;
     }
 }

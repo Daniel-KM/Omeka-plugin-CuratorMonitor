@@ -11,26 +11,33 @@ time.
 Notes
 -----
 
-- To modify or to add elements, go to Settings > Element Sets > Monitor > Edit.
-- Once inserted, the name and the description can't be changed via the interface
-like fields of other elements sets. The comment and the other options can be
-updated at any time.
-- To remove an element, a security is added: a checkbox in the config page of
-the plugin should be checked before.
+* Add, modify and remove elements
 
+  - To manage  elements, go to Settings > Element Sets > Monitor > Edit.
+  - Once inserted, the name and the description can't be changed via the
+  interface like fields of other element sets. The comment and the other options
+  can be updated at any time.
+  - To remove an element, a security is added: a checkbox in the config page of
+  the plugin should be checked before.
 
-TODO
-----
+* Export of stats
 
-- Export stats about metadata to LibreOffice.
+  Stats can be filtered and exported via the main page of the plugin. Supported
+  formats are:
+
+  - [CSV] (values are separated by a tabulation).
+  - [Flat Open Document Spreadsheet] or "fods", another standard format that can
+  be opened by any free spreadsheets or by any text editor (this is a simple xml
+  file). Note: With old releases of [LibreOffice] for Windows, a little free
+  [filter] may need to be installed.
 
 
 Installation
 ------------
 
-Install the required plugins [HistoryLog] and [SimpleVocab]. The last
-improvements on History Log are not yet committed, so the [fork of History Log]
-should still be used (version 2.7 or higher).
+Install the required plugins [HistoryLog] (version 2.8 or higher) and [SimpleVocab].
+If the last improvements on History Log are not yet committed, the [fork of History Log]
+should be used.
 
 Install the optional plugin [Hide Elements] in order to hide some fields to
 the public or selected groups of users. The [fork of Hide Elements] can be used
@@ -103,6 +110,9 @@ Copyright
 [SimpleVocab]: https://github.com/omeka/plugin-SimpleVocab
 [Hide Elements]: https://github.com/omeka/HideElements
 [fork of Hide Elements]: https://github.com/Daniel-KM/HideElements
+[LibreOffice]: https://www.libreoffice.org/
+[Flat OpenDocument Spreadsheet]: https://en.wikipedia.org/wiki/OpenDocument_technical_specification
+[filter]: http://www.sylphide-consulting.com/shapekit/spreadsheet-generation/15-opendocument-flat-format
 [plugin issues]: https://github.com/Daniel-KM/CuratorMonitor/issues
 [CeCILL v2.1]: https://www.cecill.info/licences/Licence_CeCILL_V2.1-en.html
 [GNU/GPL]: https://www.gnu.org/licenses/gpl-3.0.html

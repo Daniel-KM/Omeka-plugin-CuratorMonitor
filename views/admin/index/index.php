@@ -51,9 +51,9 @@ echo head(array(
         </ul>
     </div>
 <?php
-if (!empty($stats)):
+if (!empty($results)):
 $statusElements = $this->monitor()->getStatusElements();
-foreach ($stats as $elementId => $stat):
+foreach ($results as $elementId => $result):
     if (!isset($statusElements[$elementId]['element'])):
         continue;
     endif;
@@ -68,7 +68,7 @@ foreach ($stats as $elementId => $stat):
                 <tr>
                     <?php
                     $browseHeadings = array();
-                    $headers = array_keys(reset($stat));
+                    $headers = array_keys(reset($result));
                     foreach ($headers as $header):
                         $browseHeadings[strlen($header) > 0 ? $header : __('Not Set')] = null;
                     endforeach;
@@ -79,7 +79,7 @@ foreach ($stats as $elementId => $stat):
             <tbody>
                 <?php
                 $key = 0;
-                foreach ($stat as $period => $row): ?>
+                foreach ($result as $period => $row): ?>
                 <tr class="curator-monitor-stat <?php echo ++$key%2 == 1 ? 'odd' : 'even'; ?>">
                     <?php
                         // Replace values "0" by empty string if wanted (default

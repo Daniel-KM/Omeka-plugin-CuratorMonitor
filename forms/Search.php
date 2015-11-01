@@ -20,6 +20,7 @@ class CuratorMonitor_Form_Search extends Omeka_Form
             $userOptions = $this->_getUserOptions();
             $byOptions = $this->_getByOptions();
             $elementOptions = $this->_getElementOptions();
+            $exportOptions = $this->_getexportOptions();
         } catch (Exception $e) {
             throw $e;
         }
@@ -119,16 +120,20 @@ class CuratorMonitor_Form_Search extends Omeka_Form
             )
         ));
 
-        $this->addElement('checkbox', 'csv-download', array(
-            'label' => __('Download full log as CSV file'),
-            'description' => __('The values will be separated by a tabulation.'),
-            'style' => 'max-width: 120px;',
+        // Output.
+        $this->addElement('radio', 'export', array(
+            'label' => __('Output'),
+            'value' => '',
+            'validators' => array(
+                'alnum',
+            ),
             'required' => false,
+            'multiOptions' => $exportOptions,
         ));
 
-        $this->addElement('checkbox', 'csv-headers', array(
-            'label' => __('Include headers in csv files'),
-            'style' => 'max-width: 120px;',
+        $this->addElement('checkbox', 'export-headers', array(
+            'label' => __('Include headers'),
+            'value' => true,
             'required' => false,
         ));
 
@@ -136,17 +141,12 @@ class CuratorMonitor_Form_Search extends Omeka_Form
             $this->addElement('hash', 'curator_monitor_token');
         }
 
-        // Submit.
+        // Button for submit.
         $this->addElement('submit', 'submit-search', array(
             'label' => __('Report'),
         ));
-        // TODO Add decorator as in "items/search-form.php" for scroll.
 
-        /*
-        $this->addElement('submit', 'submit-download', array(
-            'label' => __('Download Log'),
-        ));
-        */
+        // TODO Add decorator as in "items/search-form.php" for scroll.
 
         // Display Groups.
         $this->addDisplayGroup(array(
@@ -157,8 +157,8 @@ class CuratorMonitor_Form_Search extends Omeka_Form
             'collection',
             'user',
             'element',
-            'csv-download',
-            'csv-headers'
+            'export',
+            'export-headers'
         ), 'fields');
 
         $this->addDisplayGroup(array(
@@ -250,5 +250,21 @@ class CuratorMonitor_Form_Search extends Omeka_Form
     {
         $elements = get_view()->monitor()->getStatusElementNamesById(true, null, true);
         return array('' => 'All Monitor Status') + $elements;
+    }
+
+    /**
+     * Retrieve possible exports as a selectable option list.
+     *
+     * @return array $options An associative array of the format.
+     */
+    protected function _getexportOptions()
+    {
+        $options = array(
+            '' => __('Normal display'),
+            'csv' => __('csv (with tabulations)'),
+            'fods' => __('fods (Flat OpenDocument Spreadsheet)'),
+        );
+
+        return $options;
     }
 }

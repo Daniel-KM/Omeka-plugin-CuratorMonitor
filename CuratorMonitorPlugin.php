@@ -31,7 +31,6 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         'admin_element_sets_form_each',
         // No hook to save element set, but a hook is fired for each element.
         'after_save_element',
-        'before_delete_element_set',
     );
 
     /**
@@ -330,6 +329,13 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
      */
     public function hookAfterSaveElement($args)
     {
+        // Don't use this hook during install or upgrade, because elements are
+        // not standard records and the view is unavailable.
+        $request = Zend_Controller_Front::getInstance()->getRequest();
+        if ($request->getControllerName() == 'plugins') {
+            return;
+        }
+
         $record = $args['record'];
 
         // There is no post in this view.
@@ -343,7 +349,6 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         // Update of an existing element.
         if (empty($args['insert'])) {
             // Get post values.
-            $request = Zend_Controller_Front::getInstance()->getRequest();
             $elements = $request->getParam('elements');
 
             // The "add new Element" is not a standard hook.
@@ -416,19 +421,6 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         }
 
         // The hook for the creation of a new element is not fired by Omeka.
-    }
-
-    /**
-     * Hook used before delete element set.
-     *
-     * @param array $args
-     */
-    public function hookBeforeDeleteElementSet($args)
-    {
-        $record = $args['record'];
-        if ($record->name == $this->_elementSetName) {
-            throw new Exception(__('The element set "%s" can be removed only when the plugin "Curator Monitor" is uninstalled.', $this->_elementSetName));
-        }
     }
 
     /**

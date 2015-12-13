@@ -64,7 +64,7 @@ class CuratorMonitor_Job_Stage extends Omeka_Job_AbstractJob
                 }
                 // Check the stage.
                 $flag = true;
-                $ets = $record->getElementTexts($elementSetName, $elementName);
+                $ets = $record->getElementTexts($elementSet->name, $element->name);
                 foreach ($ets as $et) {
                     if ($et->text === $newTerm) {
                         $this->_log(__('Record #%d is already staged to "%s" and has been skipped.', $record, $newTerm));

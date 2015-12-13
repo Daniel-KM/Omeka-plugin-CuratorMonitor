@@ -63,7 +63,7 @@ foreach ($results as $elementId => $result):
     <div class="panel">
         <h2><?php echo $element->name; ?></h2>
         <?php $published = 0; ?>
-        <table id="curator-monitor-stats-<?php echo $element->id; ?>" cellspacing="0" cellpadding="0">
+        <table id="curator-monitor-stats-<?php echo $element->id; ?>">
             <thead>
                 <tr>
                     <?php

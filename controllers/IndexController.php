@@ -423,7 +423,7 @@ class CuratorMonitor_IndexController extends Omeka_Controller_AbstractActionCont
                     $zip->setCompressionName($file, ZipArchive::CM_DEFLATE);
                 }
                 foreach ($xmlFiles as $file) {
-                    $zip->addFile($tmpDir . DIRECTORY_SEPARATOR . $file, $file);
+                    $zip->addFile($tempDir . DIRECTORY_SEPARATOR . $file, $file);
                     $zip->setCompressionName($file, ZipArchive::CM_DEFLATE);
                 }
 

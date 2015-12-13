@@ -47,6 +47,14 @@
                 'cols'=>'10'
             )
         );
+
+        echo $this->formLabel($element_default_name, __('Default term'));
+        echo $this->formText(
+            $element_default_name, $element_default_value,
+            array(
+                'placeholder' => __('The default term to use for new items, or let empty'),
+            )
+        );
         ?>
     </div>
 </li>

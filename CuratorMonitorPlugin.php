@@ -21,6 +21,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
     protected $_hooks = array(
         'initialize',
         'install',
+        'upgrade',
         'uninstall',
         'uninstall_message',
         'define_acl',
@@ -47,6 +48,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
     protected $_options = array(
         'curator_monitor_elements_unique' => array(),
         'curator_monitor_elements_steppable' => array(),
+        'curator_monitor_elements_default' => array(),
         'curator_monitor_display_remove' => false,
     );
 
@@ -111,11 +113,21 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
                         $this->_options['curator_monitor_elements_steppable'][$e->id] = true;
                     }
 
+                    // Set / unset the list of terms.
                     if (!empty($element['terms'])) {
                         $vocabTerm = new SimpleVocabTerm();
                         $vocabTerm->element_id = $e->id;
                         $vocabTerm->terms = implode(PHP_EOL, $element['terms']);
                         $vocabTerm->save();
+                    }
+
+                    // Set / unset the default term.
+                    if (empty($element['default']) || !in_array($element['default'], $element['terms'])) {
+                        unset($this->_options['curator_monitor_elements_default'][$e->id]);
+                    }
+                    // Add the default.
+                    else {
+                        $this->_options['curator_monitor_elements_default'][$e->id] = $element['default'];
                     }
                 }
             }
@@ -123,8 +135,23 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
 
         $this->_options['curator_monitor_elements_unique'] = json_encode($this->_options['curator_monitor_elements_unique']);
         $this->_options['curator_monitor_elements_steppable'] = json_encode($this->_options['curator_monitor_elements_steppable']);
+        $this->_options['curator_monitor_elements_default'] = json_encode($this->_options['curator_monitor_elements_default']);
 
         $this->_installOptions();
+    }
+
+    /**
+     * Upgrade the plugin.
+     */
+    public function hookUpgrade($args)
+    {
+        $oldVersion = $args['old_version'];
+        $newVersion = $args['new_version'];
+        $db = $this->_db;
+
+        if (version_compare($oldVersion, '2.3', '<')) {
+            set_option('curator_monitor_elements_default', json_encode($this->_options['curator_monitor_elements_default']));
+        }
     }
 
     /**
@@ -244,6 +271,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         $elementUnique = false;
         $elementSteppable = false;
         $elementTerms = '';
+        $elementDefault = '';
 
         $stem = 'new-elements' . "[$elementTempId]";
         $elementNameName = $stem . '[name]';
@@ -253,6 +281,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         $elementUniqueName = $stem . '[unique]';
         $elementSteppableName = $stem . '[steppable]';
         $elementTermsName = $stem . '[terms]';
+        $elementDefaultName = $stem . '[default]';
 
         $options = array(
             'element_name_name' => $elementNameName,
@@ -269,6 +298,8 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
             'element_steppable_value' => $elementSteppable,
             'element_terms_name' => $elementTermsName,
             'element_terms_value' => $elementTerms,
+            'element_default_name' => $elementDefaultName,
+            'element_default_value' => $elementDefault,
        );
 
         echo common('add-new-element', $options);
@@ -309,6 +340,12 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         $html .= $view->formTextarea('elements[' . $element->id. '][terms]',
             implode(PHP_EOL, $statusElement['terms']),
             array('placeholder' => __('Ordered list of concise terms, one by line'), 'rows' => '5', 'cols' => '10'));
+
+        // Add the select for the vocabulary term.
+        $html .= $view->formLabel('elements[' . $element->id. '][default]', __('Default term'));
+        $html .= $view->formText('elements[' . $element->id. '][default]',
+            $statusElement['default'],
+            array('placeholder' => __('The default term to use for new items, or let empty')));
 
         // Add the remove checkbox only if requested in the config page.
         if (get_option('curator_monitor_display_remove')) {
@@ -387,8 +424,11 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
                     $this->_setUnique($element, $newElement['unique']);
                     $this->_setSteppable($element, $newElement['steppable']);
                     $this->_setTerms($element, $newElement['terms']);
+                    $view->monitor()->resetCache();
+                    $this->_setDefault($element, $newElement['default']);
 
-                    $msg = __('The element "%s" (%d) has been added to the set "%s".', $element->name, $element->id, $statusElementSet->name);
+                    $msg = __('The element "%s" (%d) has been added to the set "%s".',
+                        $element->name, $element->id, $statusElementSet->name);
                     $flash = Zend_Controller_Action_HelperBroker::getStaticHelper('FlashMessenger');
                     $flash->addMessage($msg, 'success');
                     _log('[CuratorMonitor] ' . $msg, Zend_Log::NOTICE);
@@ -403,6 +443,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
                 $this->_setUnique($record, false);
                 $this->_setSteppable($record, false);
                 $this->_setTerms($record, '');
+                $this->_setDefault($record, '');
                 $msg = __('The element "%s" (%d) of the set "%s" is going to be removed.', $record->name, $record->id, $record->set_name);
                 _log('[CuratorMonitor] ' . $msg, Zend_Log::WARN);
                 // TODO History Log this type of remove.
@@ -418,6 +459,9 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
 
             // Set / unset terms.
             $this->_setTerms($record, $postElement['terms']);
+
+            // Set / unset default term.
+            $this->_setDefault($record, $postElement['default']);
         }
 
         // The hook for the creation of a new element is not fired by Omeka.
@@ -443,8 +487,8 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
     /**
      * Modify the Monitor tab in the admin->edit page.
      *
-     * @todo Use the controller (see SimpleVocab). Currently, use a hack is fine
-     * because the admin theme can't be really changed.
+     * @todo Use the controller (see SimpleVocab). Currently, use a hack and
+     * a regex is fine because the admin theme can't be really changed.
      *
      * @return array of tabs
      */
@@ -503,6 +547,20 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         $patterns[] = '/' . $pattern . '/s';
         $replacements[] = '$3';
 
+        // If this is a new record, set the default values.
+        if (empty($record->id)) {
+            $defaults = json_decode(get_option('curator_monitor_elements_default'), true);
+            foreach ($defaults as $elementId => $default) {
+                if ($default) {
+                    $pattern = sprintf('<select name="Elements\[%s\].*<option value="%s"', $elementId, $default);
+                    // Multiline and ungreedy.
+                    $patterns[] = '/(' . $pattern . ')/sU';
+                    $replacements[] = '$1 selected="selected"';
+                }
+            }
+        }
+
+        // Update the tab.
         $tab = preg_replace($patterns, $replacements, $tab);
 
         $tabs[$this->_elementSetName] = $tab;
@@ -518,7 +576,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
      */
     protected function _setUnique($record, $isUnique)
     {
-        $this->_setOptionInList($record, $isUnique, 'curator_monitor_elements_unique');
+        $this->_setOptionInList($record, (boolean) $isUnique, 'curator_monitor_elements_unique');
     }
 
     /**
@@ -530,31 +588,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
      */
     protected function _setSteppable($record, $isSteppable)
     {
-        $this->_setOptionInList($record, $isSteppable, 'curator_monitor_elements_steppable');
-    }
-
-    /**
-     * Set / unset a value in an option list.
-     *
-     * @param Record|integer $record
-     * @param boolean $value
-     * @param string $optionList
-     * @return void
-     */
-    protected function _setOptionInList($record, $value, $optionList)
-    {
-        $recordId = (integer) (is_object($record) ? $record->id : $record);
-        $value = (boolean) $value;
-        $list = json_decode(get_option($optionList), true);
-        // Set the flag as key.
-        if ($value) {
-            $list[$recordId] = true;
-        }
-        // Remove the flag.
-        else {
-            unset($list[$recordId]);
-        }
-        set_option($optionList, json_encode($list));
+        $this->_setOptionInList($record, (boolean) $isSteppable, 'curator_monitor_elements_steppable');
     }
 
     /**
@@ -598,5 +632,51 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
             $vocabTerm->terms = implode(PHP_EOL, $terms);
             $vocabTerm->save();
         }
+    }
+
+    /**
+     * Set / unset the default term for an element.
+     *
+     * If it is not in the list of terms, it is removed.
+     *
+     * @param Record|integer $record
+     * @param string $default term
+     * @return void
+     */
+    protected function _setDefault($record, $default)
+    {
+        $default = trim($default);
+
+        // Check if the element is set in the list of terms.
+        $recordId = (integer) (is_object($record) ? $record->id : $record);
+        $statusElement = get_view()->monitor()->getStatusElement($recordId);
+        if (!in_array($default, $statusElement['terms'])) {
+            $default = '';
+        }
+
+        $this->_setOptionInList($record, $default, 'curator_monitor_elements_default');
+    }
+
+    /**
+     * Set / unset a value in an option list.
+     *
+     * @param Record|integer $record
+     * @param var $value
+     * @param string $optionList
+     * @return void
+     */
+    protected function _setOptionInList($record, $value, $optionList)
+    {
+        $recordId = (integer) (is_object($record) ? $record->id : $record);
+        $list = json_decode(get_option($optionList), true);
+        // Set the value as key.
+        if ($value) {
+            $list[$recordId] = $value;
+        }
+        // Remove the flag.
+        else {
+            unset($list[$recordId]);
+        }
+        set_option($optionList, json_encode($list));
     }
 }

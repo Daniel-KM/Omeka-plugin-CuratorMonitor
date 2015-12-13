@@ -18,6 +18,7 @@ $elementSetMetadata = array(
                 'Published',
             ),
             'steppable' => true,
+            'default' => '',
         ),
         array(
             'name' => 'transcription-status',
@@ -34,6 +35,7 @@ $elementSetMetadata = array(
                 'Restricted',
             ),
             'steppable' => true,
+            'default' => '',
         ),
         array(
             'name' => 'translation-status',
@@ -51,6 +53,7 @@ $elementSetMetadata = array(
                 'Restricted',
             ),
             'steppable' => true,
+            'default' => '',
         ),
         array(
             'name' => 'research-status',
@@ -66,6 +69,7 @@ $elementSetMetadata = array(
                 'Published',
             ),
             'steppable' => true,
+            'default' => '',
         ),
         array(
             'name' => 'facsimile-permission-status',
@@ -79,6 +83,7 @@ $elementSetMetadata = array(
                 'Restricted',
             ),
             'steppable' => true,
+            'default' => '',
         ),
         array(
             'name' => 'copyright-transcription-status',
@@ -92,6 +97,7 @@ $elementSetMetadata = array(
                 'Restricted',
             ),
             'steppable' => true,
+            'default' => '',
         ),
         array(
             'name' => 'publication-status',
@@ -105,6 +111,7 @@ $elementSetMetadata = array(
                 'Published',
             ),
             'steppable' => true,
+            'default' => '',
         ),
         array(
             'name' => 'editor-notes',
@@ -130,6 +137,7 @@ $elementSetMetadata = array(
                 'Difficult',
             ),
             'steppable' => false,
+            'default' => '',
         ),
     ),
 );

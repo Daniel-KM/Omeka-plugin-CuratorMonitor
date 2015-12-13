@@ -16,6 +16,7 @@ class CuratorMonitor_View_Helper_Monitor extends Zend_View_Helper_Abstract
     protected $_nonSteppables;
     protected $_withTerms;
     protected $_withoutTerms;
+    protected $_defaultTerms;
 
     /**
      * Get the helper.
@@ -163,6 +164,7 @@ class CuratorMonitor_View_Helper_Monitor extends Zend_View_Helper_Abstract
             $nonSteppables = array();
             $withTerms = array();
             $withoutTerms = array();
+            $defaultTerms = json_decode(get_option('curator_monitor_elements_default'), true) ?: array();
             $tableVocab = $this->_db->getTable('SimpleVocabTerm');
             foreach ($elements as $element) {
                 $this->_statusElements[$element->id] = array();
@@ -179,6 +181,7 @@ class CuratorMonitor_View_Helper_Monitor extends Zend_View_Helper_Abstract
                     : explode(PHP_EOL, $this->_statusElements[$element->id]['vocab']->terms);
                 $withTerms[$element->id] = !empty($this->_statusElements[$element->id]['terms']);
                 $withoutTerms[$element->id] = empty($this->_statusElements[$element->id]['terms']);
+                $this->_statusElements[$element->id]['default'] = isset($defaultTerms[$element->id]) ? $defaultTerms[$element->id] : '';
             }
             $this->_uniques = array_filter($uniques);
             $this->_repeatables = array_filter($repeatables);
@@ -186,6 +189,7 @@ class CuratorMonitor_View_Helper_Monitor extends Zend_View_Helper_Abstract
             $this->_nonSteppables = array_filter($nonSteppables);
             $this->_withTerms = array_filter($withTerms);
             $this->_withoutTerms = array_filter($withoutTerms);
+            $this->_defaultTerms = array_filter($defaultTerms);
         }
 
         return $this->_statusElements;

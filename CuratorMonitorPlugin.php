@@ -506,7 +506,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
             // The second part allows to keep the dropdown.
             . '(.*?)'
             // The last part removes all listed buttons "Remove element".
-            . '(' . '<div class="controls"><input type="submit" name="" value="Remove" class="remove-element red button"><\/div>' . ')';
+            . '(' . '<div class="controls"><input type="submit" name="" value="' . __('Remove') . '" class="remove-element red button"><\/div>' . ')';
         // The pattern is multiline.
         $patterns[] = '/' . $pattern . '/s';
         $replacements[] = '$3';

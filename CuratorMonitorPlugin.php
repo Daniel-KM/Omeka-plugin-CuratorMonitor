@@ -75,13 +75,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
                 $elementSetMetadata['name']));
         }
 
-        // Process the installation.
-        foreach ($elementSetMetadata['elements'] as &$element) {
-            $element['name'] = $element['label'];
-        }
-        // Require the remove of the above reference to use the same name below.
-        unset($element);
-        $elements = $elementSetMetadata['elements'];
+        $elements = $this->_getElementsList();
         unset($elementSetMetadata['elements']);
 
         $elementSet = insert_element_set($elementSetMetadata, $elements);
@@ -151,6 +145,68 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
 
         if (version_compare($oldVersion, '2.3', '<')) {
             set_option('curator_monitor_elements_default', json_encode($this->_options['curator_monitor_elements_default']));
+        }
+
+        if (version_compare($oldVersion, '2.3.1', '<')) {
+            // Load elements to add.
+            require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'elements.php';
+
+            // Prepare the elements.
+            $elements = $this->_getElementsList();
+            unset($elementSetMetadata['elements']);
+
+            $elementSet = get_record('ElementSet', array('name' => $elementSetMetadata['name']));
+            $es = $elementSet->getElements();
+
+            // Add new elements, but they may have been created manually, so a
+            // check is needed to avoid an error.
+            $newElements = array();
+            foreach ($elements as $key => $element) {
+                $flag = false;
+                foreach ($es as $e) {
+                    if ($element['name'] == $e->name) {
+                        $flag = true;
+                        break;
+                    }
+                }
+                // This element doesn't exist.
+                if (!$flag) {
+                    $newElements[] = $element;
+                }
+            }
+
+            // Add new elements if any.
+            if (!empty($newElements)) {
+                $elementSet->addElements($newElements);
+                $elementSet->save();
+
+                $uniques = json_decode(get_option('curator_monitor_elements_unique'), true) ?: array();
+                $steppables = json_decode(get_option('curator_monitor_elements_steppable'), true) ?: array();
+                $defaultTerms = json_decode(get_option('curator_monitor_elements_default'), true) ?: array();
+                foreach ($newElements as $key => $element) {
+                    $e = $db->getTable('Element')
+                        ->findByElementSetNameAndElementName($elementSetMetadata['name'], $element['name']);
+
+                    if (!empty($element['unique'])) {
+                        $uniques[$e->id] = true;
+                    }
+                    if (!empty($element['steppable'])) {
+                        $steppables[$e->id] = true;
+                    }
+                    if (!empty($element['terms'])) {
+                        $vocabTerm = new SimpleVocabTerm();
+                        $vocabTerm->element_id = $e->id;
+                        $vocabTerm->terms = implode(PHP_EOL, $element['terms']);
+                        $vocabTerm->save();
+                    }
+                    if (!empty($element['default'])) {
+                        $defaultTerms[$e->id] = $element['default'];
+                    }
+                }
+                set_option('curator_monitor_elements_unique', json_encode($uniques));
+                set_option('curator_monitor_elements_steppable', json_encode($steppables));
+                set_option('curator_monitor_elements_default', json_encode($defaultTerms));
+            }
         }
     }
 
@@ -394,44 +450,26 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
             $newElements = $request->getParam('new-elements');
             $key = 0;
             foreach ($newElements as $newElement) {
-                $newElementName = trim($newElement['name']);
+                $newElement['name'] = trim($newElement['name']);
                 // Check if this a unique element in the set.
-                if ($newElementName && !in_array($newElementName, $statusElementNames)) {
+                if ($newElement['name'] && !in_array($newElement['name'], $statusElementNames)) {
                     // Check if it is not a duplicate or just created.
                     $element = get_record('Element', array(
-                        'name' => $newElementName,
+                        'name' => $newElement['name'],
                         'element_set_id' => $statusElementSet->id,
                     ));
                     if ($element) {
                         continue;
                     }
 
-                    // Create the new element.
-                    $element = new Element;
-                    $element->name = $newElementName;
-                    $element->element_set_id = $statusElementSet->id;
-                    $element->order = ++$key + count($statusElements);
-                    $element->description = $newElement['description'];
-                    $element->comment = $newElement['comment'];
-                    $element->save();
+                    $order = ++$key + count($statusElements);
+                    $element = $this->_createElement($newElement, $order);
 
                     // Update current elements to avoid issues when multiple
                     // elements are inserted.
                     $view->monitor()->resetCache();
                     $statusElements = $view->monitor()->getStatusElements();
                     $statusElementNames = $view->monitor()->getStatusElementNamesById();
-
-                    $this->_setUnique($element, $newElement['unique']);
-                    $this->_setSteppable($element, $newElement['steppable']);
-                    $this->_setTerms($element, $newElement['terms']);
-                    $view->monitor()->resetCache();
-                    $this->_setDefault($element, $newElement['default']);
-
-                    $msg = __('The element "%s" (%d) has been added to the set "%s".',
-                        $element->name, $element->id, $statusElementSet->name);
-                    $flash = Zend_Controller_Action_HelperBroker::getStaticHelper('FlashMessenger');
-                    $flash->addMessage($msg, 'success');
-                    _log('[CuratorMonitor] ' . $msg, Zend_Log::NOTICE);
                 }
             }
 
@@ -444,7 +482,8 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
                 $this->_setSteppable($record, false);
                 $this->_setTerms($record, '');
                 $this->_setDefault($record, '');
-                $msg = __('The element "%s" (%d) of the set "%s" is going to be removed.', $record->name, $record->id, $record->set_name);
+                $msg = __('The element "%s" (%d) of the set "%s" is going to be removed.',
+                    $record->name, $record->id, $record->set_name);
                 _log('[CuratorMonitor] ' . $msg, Zend_Log::WARN);
                 // TODO History Log this type of remove.
                 $record->delete();
@@ -678,5 +717,60 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
             unset($list[$recordId]);
         }
         set_option($optionList, json_encode($list));
+    }
+
+    /**
+     * Create a new element with specific monitor parameters.
+     *
+     * The element name should be checked and not exist.
+     *
+     * @param array $newElement
+     * @param integer $order
+     * @return Element
+     */
+    protected function _createElement($element, $order = 0)
+    {
+        $statusElementSet = get_record('ElementSet', array('name' => $this->_elementSetName));
+
+        $newElement = new Element;
+        $newElement->name = $element['name'];
+        $newEement->element_set_id = $statusElementSet->id;
+        if ($order) {
+            $newElement->order = $order;
+        }
+        $newElement->description = $element['description'];
+        $newElement->comment = $element['comment'];
+        $newElement->save();
+
+        $view = get_view();
+        $view->monitor()->resetCache();
+        $this->_setUnique($newElement, $element['unique']);
+        $this->_setSteppable($newElement, $element['steppable']);
+        $this->_setTerms($newElement, $element['terms']);
+        $view->monitor()->resetCache();
+        $this->_setDefault($newElement, $element['default']);
+
+        $msg = __('The element "%s" (%d) has been added to the set "%s".',
+            $newElement->name, $newElement->id, $statusElementSet->name);
+        $flash = Zend_Controller_Action_HelperBroker::getStaticHelper('FlashMessenger');
+        $flash->addMessage($msg, 'success');
+        _log('[CuratorMonitor] ' . $msg, Zend_Log::NOTICE);
+
+        return $newElement;
+    }
+
+    /**
+     * Prepare the elements from the list.
+     *
+     * @return array
+     */
+    private function _getElementsList()
+    {
+        // Load elements to add.
+        require dirname(__FILE__) . DIRECTORY_SEPARATOR . 'elements.php';
+        foreach ($elementSetMetadata['elements'] as &$element) {
+            $element['name'] = $element['label'];
+        }
+        return $elementSetMetadata['elements'];
     }
 }

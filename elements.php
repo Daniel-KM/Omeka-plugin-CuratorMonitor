@@ -114,6 +114,32 @@ $elementSetMetadata = array(
             'default' => '',
         ),
         array(
+            'name' => 'publish-images',
+            'label' => 'Publish Images',
+            'description' => 'Publish images except if the field is set to "No".',
+            'comment' => '',
+            'unique' => true,
+            'terms' => array(
+                'Yes',
+                'No',
+            ),
+            'steppable' => false,
+            'default' => 'Yes',
+        ),
+        array(
+            'name' => 'publish-transcription',
+            'label' => 'Publish Transcription',
+            'description' => 'Publish the transcription except if the field is set to "No".',
+            'comment' => '',
+            'unique' => true,
+            'terms' => array(
+                'Yes',
+                'No',
+            ),
+            'steppable' => false,
+            'default' => 'Yes',
+        ),
+        array(
             'name' => 'editor-notes',
             'label' => 'Editor’s Notes',
             'description' => 'Editor’s notes on the document/record provide a place for textual and contextual notes.',

@@ -22,7 +22,7 @@ $betweenCells = $afterCell . $beforeCell;
 <?php
 foreach ($values as $iTable => $table):
     // Main tag of the table.
-    echo str_repeat($indent, 3) . '<table:table table:name="' . $tableNames[$iTable] . '" table:style-name="ta1">' . $eol;
+    echo str_repeat($indent, 3) . '<table:table table:name="' . xml_escape($tableNames[$iTable]) . '" table:style-name="ta1">' . $eol;
 
     // Prepare the style of each column (the same in fact).
     echo str_repeat($indent, 4) . '<table:table-column table:style-name="co1" table:default-cell-style-name="Default"/>' . $eol;
@@ -30,7 +30,7 @@ foreach ($values as $iTable => $table):
     // Row for headers.
     if ($params['exportheaders']):
         echo str_repeat($indent, 4) . '<table:table-row table:style-name="ro1">' . $eol;
-        echo $beforeCell . implode($betweenCells, $headers[$iTable]) . $afterCell;
+        echo $beforeCell . implode($betweenCells, array_map('xml_escape', $headers[$iTable])) . $afterCell;
         echo str_repeat($indent, 4) . '</table:table-row>' . $eol;
     endif;
 
@@ -44,7 +44,7 @@ foreach ($values as $iTable => $table):
 
             // TODO Manage repeated cells.
 
-            echo $beforeCell . implode($betweenCells, $row) . $afterCell;
+            echo $beforeCell . implode($betweenCells, array_map('xml_escape', $row)) . $afterCell;
 
             echo str_repeat($indent, 4) . '</table:table-row>' . $eol;
         endforeach;

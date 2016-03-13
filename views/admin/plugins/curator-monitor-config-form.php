@@ -23,3 +23,30 @@
         </div>
     </div>
 </fieldset>
+<fieldset id="fieldset-curator-monitor-admin-display"><legend><?php echo __('Specific admin display'); ?></legend>
+    <div class="field">
+        <div class="two columns alpha">
+            <?php echo $this->formLabel('curator_monitor_admin_items_browse', __('Items view')); ?>
+        </div>
+        <div class="inputs five columns omega">
+            <p class="explanation">
+                <?php echo __('If checked, these filters will be added in the items/browse view.'); ?>
+            </p>
+            <div class="input-block">
+                <ul style="list-style-type: none;">
+                <?php
+                    $currentStatus = json_decode(get_option('curator_monitor_admin_items_browse')) ?: array();
+                    $statusElements = $this->monitor()->getStatusElements(null, null, null, true);
+                    foreach ($statusElements as $elementId => $elementName) {
+                        echo '<li>';
+                        echo $this->formCheckbox('curator_monitor_admin_items_browse[]', $elementId,
+                            array('checked' => in_array($elementId, $currentStatus) ? 'checked' : ''));
+                        echo $elementName;
+                        echo '</li>';
+                    }
+                ?>
+                </ul>
+            </div>
+        </div>
+    </div>
+</fieldset>

@@ -1,0 +1,40 @@
+<?php
+/**
+ * Omeka
+ *
+ * @copyright Copyright 2007-2012 Roy Rosenzweig Center for History and New Media
+ * @license http://www.gnu.org/licenses/gpl-3.0.txt GNU GPLv3
+ */
+
+/**
+ * Add buttons to filter by date (year) and status fields of Curator Monitor.
+ *
+ * @package Omeka\View\Helper
+ */
+class CuratorMonitor_View_Helper_ItemAdvancedFilters extends Zend_View_Helper_Abstract
+{
+    /**
+     * Add buttons to filter by date (year) and status fields of Curator Monitor.
+     *
+     * @param array $params Optional array of key-value pairs to use instead of
+     *  reading the current params from the request.
+     * @return string HTML output
+     */
+    public function itemAdvancedFilters(array $params = null)
+    {
+        $currentStatus = json_decode(get_option('curator_monitor_admin_items_browse')) ?: array();
+        if ($currentStatus) {
+            $currentStatus = array_flip($currentStatus);
+            $statusTermsElements = $this->view->monitor()->getStatusElements(null, null, true);
+            $statusTermsElements = array_intersect_key($statusTermsElements, $currentStatus);
+            $statusNoTermElements = $this->view->monitor()->getStatusElements(null, null, false);
+            $statusNoTermElements = array_intersect_key($statusNoTermElements, $currentStatus);
+            return $this->view->partial(
+                'items/curator-monitor-advanced-filters.php',
+                array(
+                    'statusTermsElements' => $statusTermsElements,
+                    'statusNoTermElements' => $statusNoTermElements,
+            ));
+        }
+    }
+}

@@ -49,6 +49,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         'curator_monitor_elements_unique' => array(),
         'curator_monitor_elements_steppable' => array(),
         'curator_monitor_elements_default' => array(),
+        'curator_monitor_admin_items_browse' => array(),
         'curator_monitor_display_remove' => false,
     );
 
@@ -130,6 +131,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         $this->_options['curator_monitor_elements_unique'] = json_encode($this->_options['curator_monitor_elements_unique']);
         $this->_options['curator_monitor_elements_steppable'] = json_encode($this->_options['curator_monitor_elements_steppable']);
         $this->_options['curator_monitor_elements_default'] = json_encode($this->_options['curator_monitor_elements_default']);
+        $this->_options['curator_monitor_admin_items_browse'] = json_encode($this->_options['curator_monitor_admin_items_browse']);
 
         $this->_installOptions();
     }
@@ -278,6 +280,9 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
     {
         $post = $args['post'];
         foreach ($this->_options as $optionKey => $optionValue) {
+            if (is_array($optionValue)) {
+               $post[$optionKey] = json_encode($post[$optionKey]) ?: json_encode($optionValue);
+            }
             if (isset($post[$optionKey])) {
                 set_option($optionKey, $post[$optionKey]);
             }

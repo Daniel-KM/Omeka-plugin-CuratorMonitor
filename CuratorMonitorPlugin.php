@@ -30,6 +30,9 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         'admin_head',
         'admin_items_browse_simple_each',
         'admin_items_browse_detailed_each',
+        // 'admin_items_browse',
+        'admin_items_batch_edit_form',
+        'items_batch_edit_custom',
         'admin_element_sets_form',
         'admin_element_sets_form_each',
         // No hook to save element set, but a hook is fired for each element.
@@ -42,6 +45,8 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
     protected $_filters = array(
         'admin_navigation_main',
         'admin_items_form_tabs',
+        // Special batch edits are dropdown, so no error can be done.
+        // 'items_batch_edit_error',
     );
 
     /**
@@ -369,6 +374,51 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
                 echo $html;
                 echo '</div>';
             }
+        }
+    }
+
+    /**
+     * Add a partial batch edit form.
+     *
+     * @return void
+     */
+    public function hookAdminItemsBatchEditForm($args)
+    {
+        $view = $args['view'];
+        $statusTermsElements = $view->monitor()->getStatusElements(null, null, true);
+        $statusNoTermElements = $view->monitor()->getStatusElements(null, null, false);
+        if ($statusTermsElements || $statusNoTermElements) {
+            echo $view->partial(
+                'forms/curator-monitor-batch-edit.php',
+                array(
+                    'statusTermsElements' => $statusTermsElements,
+                    'statusNoTermElements' => $statusNoTermElements,
+            ));
+        }
+    }
+
+    /**
+     * Process the partial batch edit form.
+     *
+     * @return void
+     */
+    public function hookItemsBatchEditCustom($args)
+    {
+        $item = $args['item'];
+        $statusTerms = array_filter($args['custom']['curatormonitor']['statusterms'], function ($v) { return strlen($v) > 0; });
+        if (!empty($statusTerms)) {
+            $statusTermsElements = get_view()->monitor()->getStatusElements(null, null, true);
+            foreach ($statusTerms as $elementId => $termId) {
+                $elementId = (integer) substr($elementId, 8);
+                $item->deleteElementTextsByElementId(array($elementId));
+                if ($termId !== 'remove') {
+                    $item->addTextForElement(
+                        $statusTermsElements[$elementId]['element'],
+                        $statusTermsElements[$elementId]['terms'][$termId],
+                        false);
+                }
+            }
+            $item->save();
         }
     }
 

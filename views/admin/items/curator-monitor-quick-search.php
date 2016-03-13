@@ -25,7 +25,6 @@ endif;
 <?php
 // The output go to curator-monitor controller, where the query is standardized
 // as an adavanced item search, and forwarded to items/search.
-$i = 0; // TODO Add the count grom the search/get.
 foreach ($statusTermsElements as $elementId => $statusElement): ?>
         <div class="three columns alpha">
             <?php echo $this->formLabel('terms-' . $elementId, $statusElement['name']); ?>
@@ -52,6 +51,31 @@ foreach ($statusTermsElements as $elementId => $statusElement): ?>
             </div>
         </div>
 <?php endforeach;
+foreach ($statusNoTermElements as $elementId => $statusElement): ?>
+        <div class="three columns alpha">
+            <?php echo $this->formLabel('terms-' . $elementId, $statusElement['name']); ?>
+        </div>
+        <div class="seven columns omega inputs">
+            <div class="search-entry">
+                <?php
+                $options = array('' => __('Filter By'));
+                $options += array(
+                    'is-empty' => __('is empty'),
+                    'is-not-empty' => __('is not empty'),
+                );
+                echo $this->formSelect(
+                    "terms[$elementId]",
+                    isset($terms[$elementId]) ? $terms[$elementId] : '',
+                    array(
+                        'title' => $statusElement['name'],
+                        'id' => 'terms-' . $elementId,
+                        'class' => 'advanced-search-type'
+                    ),
+                    $options
+                ); ?>
+            </div>
+        </div>
+<?php endforeach;
         fire_plugin_hook('curator_monitor_items_browse_search', array('view' => $this, 'terms' => $terms)); ?>
     </div>
     <div class="offset-by-three three columns">
@@ -60,10 +84,5 @@ foreach ($statusTermsElements as $elementId => $statusElement): ?>
         </div>
     </div>
 </form>
-<?php
-// Nothing to do with no-terms elements.
-// foreach ($statusNoTermElements as $elementId => $statusElement):
-// endforeach;
-?>
 </div>
 <br class="clear" />

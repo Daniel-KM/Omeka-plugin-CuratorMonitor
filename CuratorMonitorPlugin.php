@@ -80,7 +80,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
     public function hookInstall()
     {
         // Load elements to add.
-        require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'elements.php';
+        require dirname(__FILE__) . DIRECTORY_SEPARATOR . 'elements.php';
 
         $elementSet = get_record('ElementSet', array('name' => $elementSetMetadata['name']));
         if ($elementSet) {
@@ -162,70 +162,95 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         }
 
         if (version_compare($oldVersion, '2.3.1', '<')) {
-            // Load elements to add.
-            require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'elements.php';
-
-            // Prepare the elements.
-            $elements = $this->_getElementsList();
-            unset($elementSetMetadata['elements']);
-
-            $elementSet = get_record('ElementSet', array('name' => $elementSetMetadata['name']));
-            $es = $elementSet->getElements();
-
-            // Add new elements, but they may have been created manually, so a
-            // check is needed to avoid an error.
-            $newElements = array();
-            foreach ($elements as $key => $element) {
-                $flag = false;
-                foreach ($es as $e) {
-                    if ($element['name'] == $e->name) {
-                        $flag = true;
-                        break;
-                    }
-                }
-                // This element doesn't exist.
-                if (!$flag) {
-                    $newElements[] = $element;
-                }
-            }
-
-            // Add new elements if any.
-            if (!empty($newElements)) {
-                $elementSet->addElements($newElements);
-                $elementSet->save();
-
-                $uniques = json_decode(get_option('curator_monitor_elements_unique'), true) ?: array();
-                $steppables = json_decode(get_option('curator_monitor_elements_steppable'), true) ?: array();
-                $defaultTerms = json_decode(get_option('curator_monitor_elements_default'), true) ?: array();
-                foreach ($newElements as $key => $element) {
-                    $e = $db->getTable('Element')
-                        ->findByElementSetNameAndElementName($elementSetMetadata['name'], $element['name']);
-
-                    if (!empty($element['unique'])) {
-                        $uniques[$e->id] = true;
-                    }
-                    if (!empty($element['steppable'])) {
-                        $steppables[$e->id] = true;
-                    }
-                    if (!empty($element['terms'])) {
-                        $vocabTerm = new SimpleVocabTerm();
-                        $vocabTerm->element_id = $e->id;
-                        $vocabTerm->terms = implode(PHP_EOL, $element['terms']);
-                        $vocabTerm->save();
-                    }
-                    if (!empty($element['default'])) {
-                        $defaultTerms[$e->id] = $element['default'];
-                    }
-                }
-                set_option('curator_monitor_elements_unique', json_encode($uniques));
-                set_option('curator_monitor_elements_steppable', json_encode($steppables));
-                set_option('curator_monitor_elements_default', json_encode($defaultTerms));
-            }
+            $this->_addNewElements();
         }
+
         if (version_compare($oldVersion, '2.4.1', '<')) {
             $adminItemsBrowse = get_option('curator_monitor_admin_items_browse');
             $adminItemsBrowse['search'] = $adminItemsBrowse['filter'];
             set_option('curator_monitor_admin_items_browse', $adminItemsBrowse);
+        }
+
+        if (version_compare($oldVersion, '2.4.2', '<')) {
+            $this->_addNewElements();
+
+            $defaultTerms = json_decode(get_option('curator_monitor_elements_default'), true) ?: array();
+            $elementTable = $db->getTable('Element');
+            foreach (array('Publish Record', 'Publish Images', 'Publish Transcription') as $elementName) {
+                $element = $elementTable->findByElementSetNameAndElementName($this->_elementSetName, $elementName);
+                if ($element) {
+                    unset($defaultTerms[$element->id]);
+                }
+            }
+            set_option('curator_monitor_elements_default', json_encode($defaultTerms));
+        }
+    }
+
+    /**
+     * Helper to add new element automatically.
+     */
+    protected function _addNewElements()
+    {
+        $db = $this->_db;
+
+        // Load elements to add.
+        require dirname(__FILE__) . DIRECTORY_SEPARATOR . 'elements.php';
+
+        // Prepare the elements.
+        $elements = $this->_getElementsList();
+        unset($elementSetMetadata['elements']);
+
+        $elementSet = get_record('ElementSet', array('name' => $elementSetMetadata['name']));
+        $es = $elementSet->getElements();
+
+        // Add new elements, but they may have been created manually, so a
+        // check is needed to avoid an error.
+        $newElements = array();
+        foreach ($elements as $key => $element) {
+            $flag = false;
+            foreach ($es as $e) {
+                if ($element['name'] == $e->name) {
+                    $flag = true;
+                    break;
+                }
+            }
+            // This element doesn't exist.
+            if (!$flag) {
+                $newElements[] = $element;
+            }
+        }
+
+        // Add new elements if any.
+        if (!empty($newElements)) {
+            $elementSet->addElements($newElements);
+            $elementSet->save();
+
+            $uniques = json_decode(get_option('curator_monitor_elements_unique'), true) ?: array();
+            $steppables = json_decode(get_option('curator_monitor_elements_steppable'), true) ?: array();
+            $defaultTerms = json_decode(get_option('curator_monitor_elements_default'), true) ?: array();
+            foreach ($newElements as $key => $element) {
+                $e = $db->getTable('Element')
+                    ->findByElementSetNameAndElementName($elementSetMetadata['name'], $element['name']);
+
+                if (!empty($element['unique'])) {
+                    $uniques[$e->id] = true;
+                }
+                if (!empty($element['steppable'])) {
+                    $steppables[$e->id] = true;
+                }
+                if (!empty($element['terms'])) {
+                    $vocabTerm = new SimpleVocabTerm();
+                    $vocabTerm->element_id = $e->id;
+                    $vocabTerm->terms = implode(PHP_EOL, $element['terms']);
+                    $vocabTerm->save();
+                }
+                if (!empty($element['default'])) {
+                    $defaultTerms[$e->id] = $element['default'];
+                }
+            }
+            set_option('curator_monitor_elements_unique', json_encode($uniques));
+            set_option('curator_monitor_elements_steppable', json_encode($steppables));
+            set_option('curator_monitor_elements_default', json_encode($defaultTerms));
         }
     }
 

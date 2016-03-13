@@ -100,17 +100,16 @@ $elementSetMetadata = array(
             'default' => '',
         ),
         array(
-            'name' => 'publication-status',
-            'label' => 'Publication Status',
-            'description' => 'Status of the publication.',
+            'name' => 'publish-record',
+            'label' => 'Publish Record',
+            'description' => 'Publish record except if the field is set to "No".',
             'comment' => '',
             'unique' => true,
             'terms' => array(
-                'Not Ready',
-                'Ready',
-                'Published',
+                'Yes',
+                'No',
             ),
-            'steppable' => true,
+            'steppable' => false,
             'default' => '',
         ),
         array(
@@ -124,7 +123,7 @@ $elementSetMetadata = array(
                 'No',
             ),
             'steppable' => false,
-            'default' => 'Yes',
+            'default' => '',
         ),
         array(
             'name' => 'publish-transcription',
@@ -137,7 +136,7 @@ $elementSetMetadata = array(
                 'No',
             ),
             'steppable' => false,
-            'default' => 'Yes',
+            'default' => '',
         ),
         array(
             'name' => 'editor-notes',

@@ -118,6 +118,7 @@ foreach ($results as $elementId => $result):
         $statusElements = $this->monitor()->getStatusElements(true, null, true);
         if (empty($statusElements)):
             echo ' ' . __('There is no element that can be used as a status (a Monitor element with terms and unrepeatable).');
+            echo ' ' . __('Check the options of the elements in Settings > Elements sets > "Monitor".');
         endif;
     ?></p>
 <?php endif; ?>

@@ -30,26 +30,30 @@ class CuratorMonitor_View_Helper_ItemQuickFilters extends Zend_View_Helper_Abstr
         $statusTermsElements = $this->view->monitor()->getStatusElements(null, null, true);
         $statusNoTermElements = $this->view->monitor()->getStatusElements(null, null, false);
 
-        $terms = array_intersect_key($statusTermsElements, $current['search']['Monitor']);
-        $noTerms = array_intersect_key($statusNoTermElements, $current['search']['Monitor']);
-        if (!empty($terms) || !empty($noTerms)) {
-            $html .= $this->view->partial(
-                'items/curator-monitor-quick-search.php',
-                array(
-                    'statusTermsElements' => $terms,
-                    'statusNoTermElements' => $noTerms,
-            ));
+        if (!empty($current['search']['Monitor'])) {
+            $terms = array_intersect_key($statusTermsElements, $current['search']['Monitor']);
+            $noTerms = array_intersect_key($statusNoTermElements, $current['search']['Monitor']);
+            if (!empty($terms) || !empty($noTerms)) {
+                $html .= $this->view->partial(
+                    'items/curator-monitor-quick-search.php',
+                    array(
+                        'statusTermsElements' => $terms,
+                        'statusNoTermElements' => $noTerms,
+                ));
+            }
         }
 
-        $terms = array_intersect_key($statusTermsElements, $current['filter']['Monitor']);
-        $noTerms = array_intersect_key($statusNoTermElements, $current['filter']['Monitor']);
-        if (!empty($terms) || !empty($noTerms)) {
-            $html .= $this->view->partial(
-                'items/curator-monitor-quick-filters.php',
-                array(
-                    'statusTermsElements' => $terms,
-                    'statusNoTermElements' => $noTerms,
-            ));
+        if (!empty($current['filter']['Monitor'])) {
+            $terms = array_intersect_key($statusTermsElements, $current['filter']['Monitor']);
+            $noTerms = array_intersect_key($statusNoTermElements, $current['filter']['Monitor']);
+            if (!empty($terms) || !empty($noTerms)) {
+                $html .= $this->view->partial(
+                    'items/curator-monitor-quick-filters.php',
+                    array(
+                        'statusTermsElements' => $terms,
+                        'statusNoTermElements' => $noTerms,
+                ));
+            }
         }
 
         if ($html) {

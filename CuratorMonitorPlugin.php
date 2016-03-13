@@ -53,6 +53,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
      * @var array Options and their default values.
      */
     protected $_options = array(
+        'curator_monitor_display_remove' => false,
         'curator_monitor_elements_unique' => array(),
         'curator_monitor_elements_steppable' => array(),
         'curator_monitor_elements_default' => array(),
@@ -62,7 +63,6 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
             'simple' => array(),
             'detailed' => array(),
         ),
-        'curator_monitor_display_remove' => false,
     );
 
     /**

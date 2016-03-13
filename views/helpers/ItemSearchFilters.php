@@ -24,7 +24,7 @@ class CuratorMonitor_View_Helper_ItemSearchFilters extends Omeka_View_Helper_Ite
     {
         $html = parent::itemSearchFilters($params);
         if (is_admin_theme()) {
-            $html .= $this->view->itemAdvancedFilters($params);
+            $html .= $this->view->itemQuickFilters($params);
         }
         return $html;
     }

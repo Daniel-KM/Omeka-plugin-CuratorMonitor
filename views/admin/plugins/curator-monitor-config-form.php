@@ -41,9 +41,10 @@
             <thead>
                 <tr>
                     <th class="curator-monitor-boxes" rowspan="2"><?php echo __('Element'); ?></th>
-                    <th class="curator-monitor-boxes" colspan="5"><?php echo __('Display to browse:'); ?></th>
+                    <th class="curator-monitor-boxes" colspan="5"><?php echo __('Display in items/browse:'); ?></th>
                 </tr>
                 <tr>
+                    <th class="curator-monitor-boxes"><?php echo __('Search'); ?></th>
                     <th class="curator-monitor-boxes"><?php echo __('Filter'); ?></th>
                     <th class="curator-monitor-boxes"><?php echo __('Directly'); ?></th>
                     <th class="curator-monitor-boxes"><?php echo __('Details'); ?></th>
@@ -63,6 +64,16 @@
                 <?php endif; ?>
                 <tr>
                     <td><?php echo __($element->name); ?></td>
+                    <?php if ($current_element_set == 'Monitor'): ?>
+                    <td class="japp-boxes">
+                        <?php echo $this->formCheckbox(
+                            "search[{$element->set_name}][{$element->id}]",
+                            '1', array(
+                                'disableHidden' => true,
+                                'checked' => isset($settings['search'][$element->set_name][$element->id]),
+                            )
+                        ); ?>
+                    </td>
                     <td class="japp-boxes">
                         <?php echo $this->formCheckbox(
                             "filter[{$element->set_name}][{$element->id}]",
@@ -72,6 +83,10 @@
                             )
                         ); ?>
                     </td>
+                    <?php else: ?>
+                    <td></td>
+                    <td></td>
+                    <?php endif; ?>
                     <td class="japp-boxes">
                         <?php echo $this->formCheckbox(
                             "simple[{$element->set_name}][{$element->name}]",

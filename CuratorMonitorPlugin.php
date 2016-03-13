@@ -57,6 +57,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         'curator_monitor_elements_steppable' => array(),
         'curator_monitor_elements_default' => array(),
         'curator_monitor_admin_items_browse' => array(
+            'search' => array(),
             'filter' => array(),
             'simple' => array(),
             'detailed' => array(),
@@ -221,6 +222,11 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
                 set_option('curator_monitor_elements_default', json_encode($defaultTerms));
             }
         }
+        if (version_compare($oldVersion, '2.4.1', '<')) {
+            $adminItemsBrowse = get_option('curator_monitor_admin_items_browse');
+            $adminItemsBrowse['search'] = $adminItemsBrowse['filter'];
+            set_option('curator_monitor_admin_items_browse', $adminItemsBrowse);
+        }
     }
 
     /**
@@ -278,11 +284,8 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
 
         $settings = json_decode(get_option('curator_monitor_admin_items_browse'), true) ?: $this->_options['curator_monitor_admin_items_browse'];
 
-        $elementSet = get_record('ElementSet', array('name' => $this->_elementSetName));
-
         $table = get_db()->getTable('Element');
         $select = $table->getSelect()
-            ->where('elements.element_set_id = ?', $elementSet->id)
             ->order('elements.element_set_id')
             ->order('ISNULL(elements.order)')
             ->order('elements.order');
@@ -315,6 +318,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         }
 
         $settings = array(
+            'search' => isset($post['search']) ? $post['search'] : array(),
             'filter' => isset($post['filter']) ? $post['filter'] : array(),
             'simple' => isset($post['simple']) ? $post['simple'] : array(),
             'detailed' => isset($post['detailed']) ? $post['detailed'] : array(),
@@ -329,8 +333,9 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
      */
     public function hookAdminHead()
     {
-        queue_css_string('.last-change {font-size: 12px; font-style: italic;}');
-        queue_css_string('
+        queue_css_string(
+            '#curator-monitor-quick-search, #curator-monitor-quick-filters { cursor: pointer; }
+            .last-change {font-size: 12px; font-style: italic;}
             .curator-monitor-items-browse > span {font-weight: bold; font-style: italic;}
             .curator-monitor-items-browse div {padding-left: 12px;}
             .curator-monitor-items-browse .curator-monitor-items-element {font-style: italic;}

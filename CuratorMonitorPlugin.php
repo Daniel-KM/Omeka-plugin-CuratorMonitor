@@ -9,6 +9,8 @@
 /**
  * The Curator Monitor plugin.
  *
+ * @todo Manage automatic values (hide them from form, etc.).
+ *
  * @package Omeka\Plugins\CuratorMonitor
  */
 class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin

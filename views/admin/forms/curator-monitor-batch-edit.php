@@ -1,6 +1,9 @@
 <fieldset id="curator-monitor-item-metadata">
     <h2><?php echo __('Curator Monitor'); ?></h2>
-    <p class="explanation"><?php echo __('Set these status for the selected items.'); ?></p>
+    <p class="explanation">
+        <?php echo __('Set these status for the selected items.'); ?>
+        <?php echo __('Note that some elements may be automatically set.'); ?>
+    </p>
 <?php foreach ($statusTermsElements as $elementId => $statusElement): ?>
     <div class="field">
         <div class="two columns alpha">

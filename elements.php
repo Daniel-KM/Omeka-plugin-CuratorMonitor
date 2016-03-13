@@ -105,6 +105,7 @@ $elementSetMetadata = array(
             'description' => 'Publish record except if the field is set to "No".',
             'comment' => '',
             'unique' => true,
+            'automatic' => true,
             'terms' => array(
                 'Yes',
                 'No',
@@ -118,6 +119,7 @@ $elementSetMetadata = array(
             'description' => 'Publish images except if the field is set to "No".',
             'comment' => '',
             'unique' => true,
+            'automatic' => true,
             'terms' => array(
                 'Yes',
                 'No',
@@ -131,6 +133,7 @@ $elementSetMetadata = array(
             'description' => 'Publish the transcription except if the field is set to "No".',
             'comment' => '',
             'unique' => true,
+            'automatic' => true,
             'terms' => array(
                 'Yes',
                 'No',

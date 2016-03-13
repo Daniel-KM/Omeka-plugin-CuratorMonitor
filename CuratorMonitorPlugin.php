@@ -867,7 +867,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
 
         $newElement = new Element;
         $newElement->name = $element['name'];
-        $newEement->element_set_id = $statusElementSet->id;
+        $newElement->element_set_id = $statusElementSet->id;
         if ($order) {
             $newElement->order = $order;
         }

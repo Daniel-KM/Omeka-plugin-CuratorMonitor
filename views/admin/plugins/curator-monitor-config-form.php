@@ -1,3 +1,11 @@
+<style type="text/css">
+.curator-monitor-boxes {
+    text-align: center;
+}
+.input-block ul {
+    list-style: none outside none;
+}
+</style>
 <fieldset id="fieldset-curator-monitor-elements"><legend><?php echo __('Elements'); ?></legend>
     <?php $monitorElementSet = $this->monitor()->getElementSet(); ?>
     <p><?php echo __('To manage elements (repeatable or not, steppable or not, with list of terms or not...), go to %sSettings%s, then %sElement Sets%s, then %sMonitor%s.',
@@ -25,28 +33,66 @@
 </fieldset>
 <fieldset id="fieldset-curator-monitor-admin-display"><legend><?php echo __('Specific admin display'); ?></legend>
     <div class="field">
-        <div class="two columns alpha">
-            <?php echo $this->formLabel('curator_monitor_admin_items_browse', __('Items view')); ?>
-        </div>
-        <div class="inputs five columns omega">
-            <p class="explanation">
-                <?php echo __('If checked, these filters will be added in the items/browse view.'); ?>
-            </p>
-            <div class="input-block">
-                <ul style="list-style-type: none;">
-                <?php
-                    $currentStatus = json_decode(get_option('curator_monitor_admin_items_browse')) ?: array();
-                    $statusElements = $this->monitor()->getStatusElements(null, null, null, true);
-                    foreach ($statusElements as $elementId => $elementName) {
-                        echo '<li>';
-                        echo $this->formCheckbox('curator_monitor_admin_items_browse[]', $elementId,
-                            array('checked' => in_array($elementId, $currentStatus) ? 'checked' : ''));
-                        echo $elementName;
-                        echo '</li>';
-                    }
-                ?>
-                </ul>
-            </div>
-        </div>
+        <?php echo $this->formLabel('curator_monitor_admin_items_browse', __('Display elements')); ?>
+        <p class="explanation">
+            <?php echo __('The content of checked elements will be displayed in the main cell or in the detailed part of the main cell of each item.'); ?>
+        </p>
+        <table id="hide-elements-table">
+            <thead>
+                <tr>
+                    <th class="curator-monitor-boxes" rowspan="2"><?php echo __('Element'); ?></th>
+                    <th class="curator-monitor-boxes" colspan="5"><?php echo __('Display to browse:'); ?></th>
+                </tr>
+                <tr>
+                    <th class="curator-monitor-boxes"><?php echo __('Filter'); ?></th>
+                    <th class="curator-monitor-boxes"><?php echo __('Directly'); ?></th>
+                    <th class="curator-monitor-boxes"><?php echo __('Details'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php
+            $current_element_set = null;
+            foreach ($elements as $element):
+                if ($element->set_name != $current_element_set):
+                    $current_element_set = $element->set_name; ?>
+                <tr>
+                    <th colspan="6">
+                        <strong><?php echo __($current_element_set); ?></strong>
+                    </th>
+                </tr>
+                <?php endif; ?>
+                <tr>
+                    <td><?php echo __($element->name); ?></td>
+                    <td class="japp-boxes">
+                        <?php echo $this->formCheckbox(
+                            "filter[{$element->set_name}][{$element->id}]",
+                            '1', array(
+                                'disableHidden' => true,
+                                'checked' => isset($settings['filter'][$element->set_name][$element->id]),
+                            )
+                        ); ?>
+                    </td>
+                    <td class="japp-boxes">
+                        <?php echo $this->formCheckbox(
+                            "simple[{$element->set_name}][{$element->name}]",
+                            '1', array(
+                                'disableHidden' => true,
+                                'checked' => isset($settings['simple'][$element->set_name][$element->name]),
+                            )
+                        ); ?>
+                    </td>
+                    <td class="japp-boxes">
+                        <?php echo $this->formCheckbox(
+                            "detailed[{$element->set_name}][{$element->name}]",
+                            '1', array(
+                                'disableHidden' => true,
+                                'checked' => isset($settings['detailed'][$element->set_name][$element->name])
+                            )
+                        ); ?>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
     </div>
 </fieldset>

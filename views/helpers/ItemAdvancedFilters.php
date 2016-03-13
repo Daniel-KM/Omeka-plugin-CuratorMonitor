@@ -22,13 +22,12 @@ class CuratorMonitor_View_Helper_ItemAdvancedFilters extends Zend_View_Helper_Ab
      */
     public function itemAdvancedFilters(array $params = null)
     {
-        $currentStatus = json_decode(get_option('curator_monitor_admin_items_browse')) ?: array();
-        if ($currentStatus) {
-            $currentStatus = array_flip($currentStatus);
+        $current = json_decode(get_option('curator_monitor_admin_items_browse'), true) ?: array();
+        if (!empty($current['filter']['Monitor'])) {
             $statusTermsElements = $this->view->monitor()->getStatusElements(null, null, true);
-            $statusTermsElements = array_intersect_key($statusTermsElements, $currentStatus);
+            $statusTermsElements = array_intersect_key($statusTermsElements, $current['filter']['Monitor']);
             $statusNoTermElements = $this->view->monitor()->getStatusElements(null, null, false);
-            $statusNoTermElements = array_intersect_key($statusNoTermElements, $currentStatus);
+            $statusNoTermElements = array_intersect_key($statusNoTermElements, $current['filter']['Monitor']);
             return $this->view->partial(
                 'items/curator-monitor-advanced-filters.php',
                 array(

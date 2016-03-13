@@ -28,6 +28,8 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         'config_form',
         'config',
         'admin_head',
+        'admin_items_browse_simple_each',
+        'admin_items_browse_detailed_each',
         'admin_element_sets_form',
         'admin_element_sets_form_each',
         // No hook to save element set, but a hook is fired for each element.
@@ -49,7 +51,11 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         'curator_monitor_elements_unique' => array(),
         'curator_monitor_elements_steppable' => array(),
         'curator_monitor_elements_default' => array(),
-        'curator_monitor_admin_items_browse' => array(),
+        'curator_monitor_admin_items_browse' => array(
+            'filter' => array(),
+            'simple' => array(),
+            'detailed' => array(),
+        ),
         'curator_monitor_display_remove' => false,
     );
 
@@ -265,10 +271,25 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         // The option is set one time only.
         set_option('curator_monitor_display_remove', false);
 
-        $view = get_view();
+        $settings = json_decode(get_option('curator_monitor_admin_items_browse'), true) ?: $this->_options['curator_monitor_admin_items_browse'];
+
+        $elementSet = get_record('ElementSet', array('name' => $this->_elementSetName));
+
+        $table = get_db()->getTable('Element');
+        $select = $table->getSelect()
+            ->where('elements.element_set_id = ?', $elementSet->id)
+            ->order('elements.element_set_id')
+            ->order('ISNULL(elements.order)')
+            ->order('elements.order');
+        $elements = $table->fetchObjects($select);
+
+        $view = $args['view'];
         echo $view->partial(
-            'plugins/curator-monitor-config-form.php'
-        );
+            'plugins/curator-monitor-config-form.php',
+            array(
+                'settings' => $settings,
+                'elements' => $elements,
+        ));
     }
 
     /**
@@ -287,6 +308,13 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
                 set_option($optionKey, $post[$optionKey]);
             }
         }
+
+        $settings = array(
+            'filter' => isset($post['filter']) ? $post['filter'] : array(),
+            'simple' => isset($post['simple']) ? $post['simple'] : array(),
+            'detailed' => isset($post['detailed']) ? $post['detailed'] : array(),
+        );
+        set_option('curator_monitor_admin_items_browse', json_encode($settings));
     }
 
     /**
@@ -297,6 +325,51 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
     public function hookAdminHead()
     {
         queue_css_string('.last-change {font-size: 12px; font-style: italic;}');
+        queue_css_string('
+            .curator-monitor-items-browse > span {font-weight: bold; font-style: italic;}
+            .curator-monitor-items-browse div {padding-left: 12px;}
+            .curator-monitor-items-browse .curator-monitor-items-element {font-style: italic;}
+        ');
+    }
+
+    /**
+     * Add the specified fields in the specified part.
+     */
+    public function hookAdminItemsBrowseSimpleEach($args)
+    {
+        $this->_adminItemsBrowseDisplay($args, 'simple');
+    }
+
+    public function hookAdminItemsBrowseDetailedEach($args)
+    {
+        $this->_adminItemsBrowseDisplay($args, 'detailed');
+    }
+
+    protected function _adminItemsBrowseDisplay($args, $location)
+    {
+        $currentElements = json_decode(get_option('curator_monitor_admin_items_browse'), true) ?: array();
+        if (empty($currentElements[$location])) {
+            return;
+        }
+
+        $view = $args['view'];
+        $item = $args['item'];
+        foreach ($currentElements[$location] as $elementSetName => $displayElements) {
+            $html = '';
+            foreach ($displayElements as $elementName => $value) {
+                $elementTexts = $item->getElementTexts($elementSetName, $elementName);
+                if ($elementTexts) {
+                    $elementText = reset($elementTexts);
+                    $text = $elementText->html ? strip_formatting($elementText->text) : $elementText->text;
+                    $html .= '<div><span class="curator-monitor-items-element">' . $elementName . '</span>: <span>' . snippet_by_word_count($text, 12) . '</span></div>';
+                }
+            }
+            if ($html) {
+                echo '<div class="curator-monitor-items-browse"><span>' . $elementSetName . '</span>';
+                echo $html;
+                echo '</div>';
+            }
+        }
     }
 
     /**
@@ -593,7 +666,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
 
         // If this is a new record, set the default values.
         if (empty($record->id)) {
-            $defaults = json_decode(get_option('curator_monitor_elements_default'), true);
+            $defaults = json_decode(get_option('curator_monitor_elements_default'), true) ?: array();
             foreach ($defaults as $elementId => $default) {
                 if ($default) {
                     $pattern = sprintf('<select name="Elements\[%s\].*<option value="%s"', $elementId, $default);

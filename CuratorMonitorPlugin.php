@@ -309,7 +309,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
     {
         $post = $args['post'];
         foreach ($this->_options as $optionKey => $optionValue) {
-            if (is_array($optionValue)) {
+            if (in_array($optionKey, array('curator_monitor_admin_items_browse'))) {
                $post[$optionKey] = json_encode($post[$optionKey]) ?: json_encode($optionValue);
             }
             if (isset($post[$optionKey])) {

@@ -186,6 +186,10 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
             }
             set_option('curator_monitor_elements_default', json_encode($defaultTerms));
         }
+
+        if (version_compare($oldVersion, '2.4.3', '<')) {
+            $this->_addNewElements();
+        }
     }
 
     /**
@@ -311,7 +315,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
 
         $settings = json_decode(get_option('curator_monitor_admin_items_browse'), true) ?: $this->_options['curator_monitor_admin_items_browse'];
 
-        $table = get_db()->getTable('Element');
+        $table = $this->_db->getTable('Element');
         $select = $table->getSelect()
             ->order('elements.element_set_id')
             ->order('ISNULL(elements.order)')

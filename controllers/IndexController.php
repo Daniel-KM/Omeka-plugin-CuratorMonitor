@@ -213,9 +213,6 @@ class CuratorMonitor_IndexController extends Omeka_Controller_AbstractActionCont
      */
     public function searchAction()
     {
-        include_once dirname(dirname(__FILE__))
-            . DIRECTORY_SEPARATOR . 'forms'
-            . DIRECTORY_SEPARATOR . 'Search.php';
         $form = new CuratorMonitor_Form_Search();
 
         // Prepare the form to return result in the browse view with pagination.

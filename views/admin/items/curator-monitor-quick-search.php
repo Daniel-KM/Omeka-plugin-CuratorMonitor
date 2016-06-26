@@ -26,10 +26,10 @@ endif;
 // The output go to curator-monitor controller, where the query is standardized
 // as an adavanced item search, and forwarded to items/search.
 foreach ($statusTermsElements as $elementId => $statusElement): ?>
-        <div class="three columns alpha">
+        <div class="four columns alpha">
             <?php echo $this->formLabel('terms-' . $elementId, $statusElement['name']); ?>
         </div>
-        <div class="seven columns omega inputs">
+        <div class="six columns omega inputs">
             <div class="search-entry">
                 <?php
                 $options = array('' => __('Filter By'));
@@ -52,10 +52,10 @@ foreach ($statusTermsElements as $elementId => $statusElement): ?>
         </div>
 <?php endforeach;
 foreach ($statusNoTermElements as $elementId => $statusElement): ?>
-        <div class="three columns alpha">
+        <div class="four columns alpha">
             <?php echo $this->formLabel('terms-' . $elementId, $statusElement['name']); ?>
         </div>
-        <div class="seven columns omega inputs">
+        <div class="six columns omega inputs">
             <div class="search-entry">
                 <?php
                 $options = array('' => __('Filter By'));
@@ -78,7 +78,7 @@ foreach ($statusNoTermElements as $elementId => $statusElement): ?>
 <?php endforeach;
         fire_plugin_hook('curator_monitor_items_browse_search', array('view' => $this, 'terms' => $terms)); ?>
     </div>
-    <div class="offset-by-three three columns">
+    <div class="offset-by-four three columns">
         <div id="quick-search-save">
             <input type="submit" class="submit big green button" name="submit_search" id="submit_search_advanced" value="<?php echo __('Quick Search'); ?>">
         </div>

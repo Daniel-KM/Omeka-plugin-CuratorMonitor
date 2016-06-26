@@ -65,7 +65,7 @@
                 <tr>
                     <td><?php echo __($element->name); ?></td>
                     <?php if ($current_element_set == 'Monitor'): ?>
-                    <td class="japp-boxes">
+                    <td class="curator-monitor-boxes">
                         <?php echo $this->formCheckbox(
                             "search[{$element->set_name}][{$element->id}]",
                             '1', array(
@@ -74,7 +74,7 @@
                             )
                         ); ?>
                     </td>
-                    <td class="japp-boxes">
+                    <td class="curator-monitor-boxes">
                         <?php echo $this->formCheckbox(
                             "filter[{$element->set_name}][{$element->id}]",
                             '1', array(
@@ -87,7 +87,7 @@
                     <td></td>
                     <td></td>
                     <?php endif; ?>
-                    <td class="japp-boxes">
+                    <td class="curator-monitor-boxes">
                         <?php echo $this->formCheckbox(
                             "simple[{$element->set_name}][{$element->name}]",
                             '1', array(
@@ -96,7 +96,7 @@
                             )
                         ); ?>
                     </td>
-                    <td class="japp-boxes">
+                    <td class="curator-monitor-boxes">
                         <?php echo $this->formCheckbox(
                             "detailed[{$element->set_name}][{$element->name}]",
                             '1', array(

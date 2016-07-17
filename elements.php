@@ -114,20 +114,6 @@ $elementSetMetadata = array(
             'default' => '',
         ),
         array(
-            'name' => 'publish-metadata',
-            'label' => 'Publish Metadata',
-            'description' => 'Publish the metadata specified in the config page except if the field is set to "No".',
-            'comment' => '',
-            'unique' => true,
-            'automatic' => false,
-            'terms' => array(
-                'Yes',
-                'No',
-            ),
-            'steppable' => false,
-            'default' => '',
-        ),
-        array(
             'name' => 'editor-notes',
             'label' => 'Editor’s Notes',
             'description' => 'Editor’s notes on the document/record provide a place for textual and contextual notes.',

@@ -159,37 +159,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         $newVersion = $args['new_version'];
         $db = $this->_db;
 
-        if (version_compare($oldVersion, '2.3', '<')) {
-            set_option('curator_monitor_elements_default', json_encode($this->_options['curator_monitor_elements_default']));
-        }
-
-        if (version_compare($oldVersion, '2.3.1', '<')) {
-            $this->_addNewElements();
-        }
-
-        if (version_compare($oldVersion, '2.4.1', '<')) {
-            $adminItemsBrowse = get_option('curator_monitor_admin_items_browse');
-            $adminItemsBrowse['search'] = $adminItemsBrowse['filter'];
-            set_option('curator_monitor_admin_items_browse', $adminItemsBrowse);
-        }
-
-        if (version_compare($oldVersion, '2.4.2', '<')) {
-            $this->_addNewElements();
-
-            $defaultTerms = json_decode(get_option('curator_monitor_elements_default'), true) ?: array();
-            $elementTable = $db->getTable('Element');
-            foreach (array('Publish Record', 'Publish Images', 'Publish Transcription') as $elementName) {
-                $element = $elementTable->findByElementSetNameAndElementName($this->_elementSetName, $elementName);
-                if ($element) {
-                    unset($defaultTerms[$element->id]);
-                }
-            }
-            set_option('curator_monitor_elements_default', json_encode($defaultTerms));
-        }
-
-        if (version_compare($oldVersion, '2.4.3', '<')) {
-            $this->_addNewElements();
-        }
+        require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'upgrade.php';
     }
 
     /**
@@ -257,6 +227,75 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
             set_option('curator_monitor_elements_unique', json_encode($uniques));
             set_option('curator_monitor_elements_steppable', json_encode($steppables));
             set_option('curator_monitor_elements_default', json_encode($defaultTerms));
+        }
+    }
+
+    /**
+     * Helper to remove old elements automatically.
+     *
+     * @param array $elementsToRemove
+     */
+    protected function _removeOldElements($elementsToRemove = array())
+    {
+        $db = $this->_db;
+
+        $uniques = json_decode(get_option('curator_monitor_elements_unique'), true) ?: array();
+        $steppables = json_decode(get_option('curator_monitor_elements_steppable'), true) ?: array();
+        $defaultTerms = json_decode(get_option('curator_monitor_elements_default'), true) ?: array();
+
+        $elementTable = $db->getTable('Element');
+        $vocabTable = $this->_db->getTable('SimpleVocabTerm');
+        foreach ($elementsToRemove as $elementName) {
+            $e = $elementTable->findByElementSetNameAndElementName($this->_elementSetName, $elementName);
+            if ($e) {
+                $vocabTerm = $vocabTable->findByElementId($e->id);
+                if ($vocabTerm) {
+                    $vocabTerm->delete();
+                }
+
+                unset($uniques[$e->id]);
+                unset($steppables[$e->id]);
+                unset($defaultTerms[$e->id]);
+
+                $e->delete();
+            }
+        }
+
+        set_option('curator_monitor_elements_unique', json_encode($uniques));
+        set_option('curator_monitor_elements_steppable', json_encode($steppables));
+        set_option('curator_monitor_elements_default', json_encode($defaultTerms));
+    }
+
+    /**
+     * Update the list of terms of a list of elements.
+     *
+     * @param array $elementsToUpdate
+     */
+    protected function _updateVocab($elementsToUpdate)
+    {
+        $db = $this->_db;
+
+        // Prepare the elements.
+        $elements = $this->_getElementsList();
+
+        $elementTable = $db->getTable('Element');
+        $vocabTable = $this->_db->getTable('SimpleVocabTerm');
+        foreach ($elementsToUpdate as $elementName) {
+            $e = $elementTable->findByElementSetNameAndElementName($this->_elementSetName, $elementName);
+            if ($e) {
+                $vocabTerm = $vocabTable->findByElementId($e->id);
+                if (!$vocabTerm) {
+                    $vocabTerm = new SimpleVocabTerm();
+                    $vocabTerm->element_id = $e->id;
+                }
+                foreach ($elements as $element) {
+                    if ($element['name'] == $elementName) {
+                        $vocabTerm->terms = implode(PHP_EOL, $element['terms']);
+                        $vocabTerm->save();
+                        break;
+                    }
+                }
+            }
         }
     }
 
@@ -339,10 +378,8 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
     public function hookConfig($args)
     {
         $post = $args['post'];
+
         foreach ($this->_options as $optionKey => $optionValue) {
-            if (in_array($optionKey, array('curator_monitor_admin_items_browse'))) {
-               $post[$optionKey] = json_encode($post[$optionKey]) ?: json_encode($optionValue);
-            }
             if (isset($post[$optionKey])) {
                 set_option($optionKey, $post[$optionKey]);
             }
@@ -688,7 +725,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
     }
 
     /**
-     * Modify the Monitor tab in the admin->edit page.
+     * Modify the Monitor tab in the admin > items > edit page.
      *
      * @todo Use the controller (see SimpleVocab). Currently, use a hack and
      * a regex is fine because the admin theme can't be really changed.

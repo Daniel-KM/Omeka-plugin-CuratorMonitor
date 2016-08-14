@@ -37,3 +37,7 @@ if (version_compare($oldVersion, '2.4.4', '<')) {
     $this->_updateVocab(array('Metadata Status'));
     $this->_removeOldElements(array('Publish Metadata'));
 }
+
+if (version_compare($oldVersion, '2.4.5', '<')) {
+    $this->_updateVocab(array('Metadata Status'));
+}

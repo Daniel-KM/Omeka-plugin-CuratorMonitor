@@ -15,7 +15,6 @@ $elementSetMetadata = array(
                 'Complete',
                 'Fact Checked',
                 'Ready to Publish',
-                'Publish Only Main Metadata',
                 'Published',
             ),
             'steppable' => true,

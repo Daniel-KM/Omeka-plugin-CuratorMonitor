@@ -403,7 +403,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
     {
         queue_css_string(
             '#curator-monitor-quick-search, #curator-monitor-quick-filters { cursor: pointer; }
-            .last-change {font-size: 12px; font-style: italic;}
+            .last-change {clear: left; font-size: 12px; font-style: italic;}
             .curator-monitor-items-browse > span {font-weight: bold; font-style: italic;}
             .curator-monitor-items-browse div {padding-left: 12px;}
             .curator-monitor-items-browse .curator-monitor-items-element {font-style: italic;}

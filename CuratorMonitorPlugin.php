@@ -747,10 +747,19 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         $lastChanges = $this->_db->getTable('HistoryLogChange')
             ->getLastChanges($record, array_keys($listElements), true);
 
+        // The "input" button has been replaced by a button between Omeka 2.4.1
+        // and Omeka 2.5.
+        if (version_compare(OMEKA_VERSION, '2.5', '<')) {
+            $inputString = '(<input type="submit" name="add_element_(%s)" .*? class="add-element">)';
+        }
+        // From Omeka 2.5.
+        else {
+            $inputString = '(<button name="add_element_(%s)" .*?<\/button>)';
+        }
+
         // Add a message only for created/updated elements.
         foreach ($lastChanges as $change) {
-            $pattern = sprintf('(<input type="submit" name="add_element_(%s)" .*? class="add-element">)',
-                $change->element_id);
+            $pattern = sprintf($inputString, $change->element_id);
             $patterns[] = '/' . $pattern . '/';
             $replacement = '$1<p class="last-change">';
             switch ($change->type) {
@@ -777,8 +786,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         $listUnique = $view->monitor()->getStatusElementNamesById(true);
         $pattern =
             // This first part of pattern removes all listed buttons "Add element".
-            '(' . sprintf('<input type="submit" name="add_element_(%s)" .*? class="add-element">',
-                implode('|', array_keys($listUnique)))  . ')'
+            sprintf($inputString, implode('|', array_keys($listUnique)))
             // The second part allows to keep the dropdown.
             . '(.*?)'
             // The last part removes all listed buttons "Remove element".

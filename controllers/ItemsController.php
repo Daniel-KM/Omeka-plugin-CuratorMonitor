@@ -28,7 +28,7 @@ class CuratorMonitor_ItemsController extends Omeka_Controller_AbstractActionCont
     {
         //Must be logged in to view items specific to certain users
         if ($this->_getParam('user') && !$this->_helper->acl->isAllowed('browse', 'Users')) {
-            $this->_setParam('user', null);
+            $this->setParam('user', null);
             // Zend re-reads from GET/POST on every getParams() so we need to
             // also remove these.
             unset($_GET['user'], $_POST['user']);

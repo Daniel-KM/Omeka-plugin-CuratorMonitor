@@ -760,7 +760,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
         // Add a message only for created/updated elements.
         foreach ($lastChanges as $change) {
             $pattern = sprintf($inputString, $change->element_id);
-            $patterns[] = '/' . $pattern . '/';
+            $patterns[] = '~' . $pattern . '~';
             $replacement = '$1<p class="last-change">';
             switch ($change->type) {
                 case HistoryLogChange::TYPE_CREATE:
@@ -792,7 +792,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
             // The last part removes all listed buttons "Remove element".
             . '(' . '<div class="controls"><input type="submit" name="" value="' . __('Remove') . '" class="remove-element red button"><\/div>' . ')';
         // The pattern is multiline.
-        $patterns[] = '/' . $pattern . '/s';
+        $patterns[] = '~' . $pattern . '~s';
         $replacements[] = '$3';
 
         // If this is a new record, set the default values.
@@ -802,7 +802,7 @@ class CuratorMonitorPlugin extends Omeka_Plugin_AbstractPlugin
                 if ($default) {
                     $pattern = sprintf('<select name="Elements\[%s\].*<option value="%s"', $elementId, $default);
                     // Multiline and ungreedy.
-                    $patterns[] = '/(' . $pattern . ')/sU';
+                    $patterns[] = '~(' . $pattern . ')~sU';
                     $replacements[] = '$1 selected="selected"';
                 }
             }

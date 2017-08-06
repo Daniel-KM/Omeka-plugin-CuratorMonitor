@@ -24,7 +24,13 @@ class CuratorMonitor_View_Helper_ItemSearchFilters extends Omeka_View_Helper_Ite
     {
         $html = parent::itemSearchFilters($params);
         if (is_admin_theme()) {
-            $html .= $this->view->itemQuickFilters($params);
+            $params = Zend_Controller_Front::getInstance()->getRequest()->getParams();
+            $module = isset($params['module']) ? $params['module'] : 'default';
+            $controller = isset($params['controller']) ? $params['controller'] : 'default';
+            $action = isset($params['action']) ? $params['action'] : 'index';
+            if (!($module === 'default' && $controller === 'items' && $action === 'batch-edit')) {
+                $html .= $this->view->itemQuickFilters($params);
+            }
         }
         return $html;
     }

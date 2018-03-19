@@ -57,8 +57,8 @@ Warning
 
 Use it at your own risk.
 
-It's always recommended to backup your files and database regularly so you can
-roll back if needed.
+It’s always recommended to backup your files and your databases and to check
+your archives regularly so you can roll back if needed.
 
 
 Troubleshooting
@@ -107,18 +107,18 @@ Copyright
 * Copyright Daniel Berthereau, 2015
 
 
-[Curator Monitor]: https://github.com/Daniel-KM/CuratorMonitor
+[Curator Monitor]: https://github.com/Daniel-KM/Omeka-plugin-CuratorMonitor
 [Omeka]: https://omeka.org
 [HistoryLog]: https://github.com/UCSCLibrary/HistoryLog
-[fork of History Log]: https://github.com/Daniel-KM/HistoryLog
+[fork of History Log]: https://github.com/Daniel-KM/Omeka-plugin-HistoryLog
 [SimpleVocab]: https://github.com/omeka/plugin-SimpleVocab
 [Hide Elements]: https://github.com/omeka/HideElements
-[fork of Hide Elements]: https://github.com/Daniel-KM/HideElements
+[fork of Hide Elements]: https://github.com/Daniel-KM/Omeka-plugin-HideElements
 [OpenDocument Spreadsheet]: http://opendocumentformat.org/
 [LibreOffice]: https://www.libreoffice.org/
 [Flat OpenDocument Spreadsheet]: https://en.wikipedia.org/wiki/OpenDocument_technical_specification
 [filter]: http://www.sylphide-consulting.com/shapekit/spreadsheet-generation/15-opendocument-flat-format
-[plugin issues]: https://github.com/Daniel-KM/CuratorMonitor/issues
+[plugin issues]: https://github.com/Daniel-KM/Omeka-plugin-CuratorMonitor/issues
 [CeCILL v2.1]: https://www.cecill.info/licences/Licence_CeCILL_V2.1-en.html
 [GNU/GPL]: https://www.gnu.org/licenses/gpl-3.0.html
 [FSF]: https://www.fsf.org
